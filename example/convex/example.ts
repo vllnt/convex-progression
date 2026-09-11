@@ -39,12 +39,14 @@ export const recordActivity = mutation({
 
 export const get = query({
   args: {
-    subjectRef: v.string(),
     key: v.string(),
     scope: v.optional(v.string()),
+    subjectRef: v.string(),
+    thresholds: v.optional(v.array(v.number())),
   },
   returns: v.union(v.null(), progressState),
-  handler: (ctx, a) => progression.get(ctx, a.subjectRef, a.key, a.scope),
+  handler: (ctx, a) =>
+    progression.get(ctx, a.subjectRef, a.key, a.scope, a.thresholds),
 });
 
 export const reset = mutation({
@@ -58,9 +60,14 @@ export const reset = mutation({
 });
 
 export const eraseSubject = mutation({
-  args: { subjectRef: v.string(), scope: v.optional(v.string()) },
+  args: {
+    batch: v.optional(v.number()),
+    scope: v.optional(v.string()),
+    subjectRef: v.string(),
+  },
   returns: v.number(),
-  handler: (ctx, a) => progression.eraseSubject(ctx, a.subjectRef, a.scope),
+  handler: (ctx, a) =>
+    progression.eraseSubject(ctx, a.subjectRef, a.scope, a.batch),
 });
 
 export const accrueTenant = mutation({

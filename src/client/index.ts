@@ -9,7 +9,7 @@ import type {
   ProgressionOptions,
   ProgressState,
 } from "./types.js";
-import { DEFAULT_SCOPE } from "../shared.js";
+import { DEFAULT_ERASE_BATCH, DEFAULT_SCOPE } from "../shared.js";
 
 export interface ProgressionComponent {
   mutations: {
@@ -17,23 +17,29 @@ export interface ProgressionComponent {
       "mutation",
       "internal",
       {
-        subjectRef: string;
+        delta: number;
         key: string;
         scope: string;
-        delta: number;
+        subjectRef: string;
         thresholds: number[];
       },
       AccrueResult
+    >;
+    eraseSubject: FunctionReference<
+      "mutation",
+      "internal",
+      { batch?: number; scope: string; subjectRef: string },
+      number
     >;
     recordActivity: FunctionReference<
       "mutation",
       "internal",
       {
-        subjectRef: string;
-        key: string;
-        scope: string;
-        periodKey: string;
         expectedPrevious?: string;
+        key: string;
+        periodKey: string;
+        scope: string;
+        subjectRef: string;
         thresholds: number[];
       },
       ActivityResult
@@ -41,21 +47,20 @@ export interface ProgressionComponent {
     reset: FunctionReference<
       "mutation",
       "internal",
-      { subjectRef: string; key: string; scope: string },
+      { key: string; scope: string; subjectRef: string },
       null
-    >;
-    eraseSubject: FunctionReference<
-      "mutation",
-      "internal",
-      { subjectRef: string; scope: string },
-      number
     >;
   };
   queries: {
     get: FunctionReference<
       "query",
       "internal",
-      { subjectRef: string; key: string; scope: string },
+      {
+        key: string;
+        scope: string;
+        subjectRef: string;
+        thresholds?: number[];
+      },
       ProgressState | null
     >;
   };
@@ -98,10 +103,10 @@ export class Progression {
     scope?: string,
   ): Promise<AccrueResult> {
     return ctx.runMutation(this.component.mutations.accrue, {
-      subjectRef,
+      delta,
       key,
       scope: this.scopeOf(scope),
-      delta,
+      subjectRef,
       thresholds,
     });
   }
@@ -112,14 +117,14 @@ export class Progression {
     key: string,
     periodKey: string,
     thresholds: number[],
-    opts: { scope?: string; expectedPrevious?: string } = {},
+    opts: { expectedPrevious?: string; scope?: string } = {},
   ): Promise<ActivityResult> {
     return ctx.runMutation(this.component.mutations.recordActivity, {
-      subjectRef,
-      key,
-      scope: this.scopeOf(opts.scope),
-      periodKey,
       expectedPrevious: opts.expectedPrevious,
+      key,
+      periodKey,
+      scope: this.scopeOf(opts.scope),
+      subjectRef,
       thresholds,
     });
   }
@@ -129,11 +134,13 @@ export class Progression {
     subjectRef: string,
     key: string,
     scope?: string,
+    thresholds?: number[],
   ): Promise<ProgressState | null> {
     return ctx.runQuery(this.component.queries.get, {
-      subjectRef,
       key,
       scope: this.scopeOf(scope),
+      subjectRef,
+      thresholds,
     });
   }
 
@@ -144,9 +151,9 @@ export class Progression {
     scope?: string,
   ): Promise<null> {
     return ctx.runMutation(this.component.mutations.reset, {
-      subjectRef,
       key,
       scope: this.scopeOf(scope),
+      subjectRef,
     });
   }
 
@@ -154,10 +161,12 @@ export class Progression {
     ctx: RunMutationCtx,
     subjectRef: string,
     scope?: string,
+    batch?: number,
   ): Promise<number> {
     return ctx.runMutation(this.component.mutations.eraseSubject, {
-      subjectRef,
+      batch,
       scope: this.scopeOf(scope),
+      subjectRef,
     });
   }
 }

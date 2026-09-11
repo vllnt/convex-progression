@@ -3,7 +3,7 @@ import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import schema from "./schema";
 import { register } from "../../src/test";
-import { levelForXp } from "../../src/shared";
+import { clampEraseBatch, levelForXp, MAX_ERASE_BATCH } from "../../src/shared";
 
 const modules = import.meta.glob("./**/*.ts");
 
@@ -41,6 +41,23 @@ describe("progression — xp / level", () => {
     expect(await t.query(api.example.get, { subjectRef: "no", key: "solo" })).toBeNull();
   });
 
+  test("get recomputes level from host thresholds", async () => {
+    const t = setup();
+    await t.mutation(api.example.accrue, {
+      subjectRef: "u1",
+      key: "solo",
+      delta: 10,
+      thresholds: [10],
+    });
+    const got = await t.query(api.example.get, {
+      subjectRef: "u1",
+      key: "solo",
+      thresholds: [100],
+    });
+    expect(got?.xp).toBe(10);
+    expect(got?.level).toBe(0);
+  });
+
   test("reset deletes a row and is idempotent", async () => {
     const t = setup();
     await t.mutation(api.example.accrue, {
@@ -62,6 +79,15 @@ describe("progression — xp / level", () => {
       delta: 1,
       thresholds: [],
     });
+    await t.mutation(api.example.accrue, {
+      subjectRef: "u1",
+      key: "b",
+      delta: 1,
+      thresholds: [],
+    });
+    expect(
+      await t.mutation(api.example.eraseSubject, { subjectRef: "u1", batch: 1 }),
+    ).toBe(1);
     expect(await t.mutation(api.example.eraseSubject, { subjectRef: "u1" })).toBe(1);
   });
 });
@@ -211,6 +237,18 @@ describe("progression — validation and scope", () => {
       t.mutation(api.example.eraseSubject, { subjectRef: "" }),
     ).rejects.toThrow();
     await expect(
+      t.mutation(api.example.eraseSubject, { subjectRef: "u1", batch: 0 }),
+    ).rejects.toThrow();
+    await expect(
+      t.mutation(api.example.eraseSubject, { subjectRef: "u1", batch: 1.5 }),
+    ).rejects.toThrow();
+    expect(
+      await t.mutation(api.example.eraseSubject, {
+        subjectRef: "nobody",
+        batch: 10_000,
+      }),
+    ).toBe(0);
+    await expect(
       t.mutation(api.example.recordActivity, {
         subjectRef: "u1",
         key: "solo",
@@ -239,5 +277,13 @@ describe("levelForXp", () => {
   test("counts reached thresholds", () => {
     expect(levelForXp(30, [10, 30, 60])).toBe(2);
     expect(levelForXp(9, [10, 30])).toBe(0);
+  });
+});
+
+describe("clampEraseBatch", () => {
+  test("clamps and rejects", () => {
+    expect(clampEraseBatch(10)).toBe(10);
+    expect(clampEraseBatch(MAX_ERASE_BATCH + 1)).toBe(MAX_ERASE_BATCH);
+    expect(() => clampEraseBatch(0)).toThrow();
   });
 });

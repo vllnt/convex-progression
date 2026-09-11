@@ -38,7 +38,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
       eraseSubject: FunctionReference<
         "mutation",
         "internal",
-        { scope: string; subjectRef: string },
+        { batch?: number; scope: string; subjectRef: string },
         number,
         Name
       >;
@@ -68,7 +68,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
       get: FunctionReference<
         "query",
         "internal",
-        { key: string; scope: string; subjectRef: string },
+        { key: string; scope: string; subjectRef: string; thresholds?: number[] },
         ProgressState | null,
         Name
       >;
