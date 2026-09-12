@@ -51,6 +51,23 @@ On Darwin arm64, Node 26.7.0, Convex 1.45.0:
   The owned process group was stopped after verification. This tests real backend
   behavior but does not establish that every run experienced an OCC retry.
 
+## Independent-review corrections
+
+The prior `972c4a7` evidence overstated two checks: its single HTTP client's
+mutation queue serialized requests, and its packed compiler command could resolve
+a global/hoisted `tsc` instead of the installed alias. Those checks are superseded:
+
+- Packed consumers now invoke the installed `typescript/bin/tsc6` with the current
+  Node executable. Both Node20 and Node22 with pinned pnpm9.15.4 pass, including
+  the unrelated-host test-helper type consumer.
+- Concurrent mutations explicitly set `skipQueue: true`. A custom fetch wrapper
+  measures outstanding HTTP requests; assertions and observed peaks are 12 for
+  awards and 8 for activity. Total XP, same-period streak, multi-mount and scheduled
+  scope-isolated erasure assertions pass on the real local backend.
+- Removed local alpha/release and interactive login scripts. CONTRIBUTING now
+  matches the current-only workflow; `check:release` runs in lint and rejects
+  script bypasses, stale bump instructions and unsafe stable workflow patterns.
+
 ## Rework
 
 - Published test registration accepts unrelated host schemas via a structural

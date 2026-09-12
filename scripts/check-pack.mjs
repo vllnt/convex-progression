@@ -43,9 +43,9 @@ new Progression(refs);
 void component;
 `,
   );
-  run("pnpm", [
-    "exec",
-    "tsc",
+  // Invoke the installed alias package compiler, not a global or hoisted tsc.
+  run(process.execPath, [
+    join(directory, "node_modules/typescript/bin/tsc6"),
     "--noEmit",
     "--strict",
     "--skipLibCheck",

@@ -46,7 +46,19 @@ try {
         }
       });
   });
-  const client = new ConvexHttpClient("http://127.0.0.1:3320");
+  let inFlight = 0;
+  let peak = 0;
+  const client = new ConvexHttpClient("http://127.0.0.1:3320", {
+    fetch: async (...parameters) => {
+      inFlight += 1;
+      peak = Math.max(peak, inFlight);
+      try {
+        return await globalThis.fetch(...parameters);
+      } finally {
+        inFlight -= 1;
+      }
+    },
+  });
   const base = { key: "xp", subjectRef: `probe-${String(Date.now())}` };
   await client.mutation(api.example.accrueSecondary, base);
   // Convex serializes missing rows as null.
@@ -54,24 +66,39 @@ try {
   assert.equal(await client.query(api.example.get, base), null);
   await Promise.all(
     Array.from({ length: 12 }, () =>
-      client.mutation(api.example.accrue, {
-        ...base,
-        delta: 1,
-        thresholds: [10],
-      }),
+      client.mutation(
+        api.example.accrue,
+        {
+          ...base,
+          delta: 1,
+          thresholds: [10],
+        },
+        { skipQueue: true },
+      ),
     ),
   );
+  assert.equal(inFlight, 0);
+  assert.equal(peak, 12, "award HTTP requests must overlap");
+  console.info(`Award HTTP peak: ${String(peak)}`);
+  peak = 0;
   const awarded = await client.query(api.example.get, base);
   assert.equal(awarded?.xp, 12);
   await Promise.all(
     Array.from({ length: 8 }, () =>
-      client.mutation(api.example.recordActivity, {
-        ...base,
-        periodKey: "p",
-        thresholds: [],
-      }),
+      client.mutation(
+        api.example.recordActivity,
+        {
+          ...base,
+          periodKey: "p",
+          thresholds: [],
+        },
+        { skipQueue: true },
+      ),
     ),
   );
+  assert.equal(inFlight, 0);
+  assert.equal(peak, 8, "activity HTTP requests must overlap");
+  console.info(`Activity HTTP peak: ${String(peak)}`);
   const active = await client.query(api.example.get, base);
   assert.equal(active?.streak, 1);
   for (const key of ["a", "b", "c"])

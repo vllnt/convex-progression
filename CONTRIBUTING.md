@@ -48,8 +48,11 @@ at least one adversarial test (auth-denied, invalid input, boundary).
 
 Maintainers only:
 
-- Preferred: run `.github/workflows/publish.yml` via `workflow_dispatch` for patch/minor/major.
-- Local fallback: `pnpm release` (patch) / `pnpm alpha` (prerelease).
+Prepare version changes through a reviewed, signed PR. The current-only
+`.github/workflows/publish.yml` dispatch publishes the reviewed `package.json`
+version on main with `RELEASE_ENABLED=true`; it never bumps versions or pushes
+commits. There is no local publishing fallback. See [release controls and
+recovery](docs/RELEASING.md). Do not enable or trigger publishing during audits.
 
 ## Reporting Issues
 
