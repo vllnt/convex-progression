@@ -6,10 +6,14 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
-## [0.1.0] - 2026-09-11
+### Fixed
+
+- Bound XP/streak arithmetic and reject silently lost awards.
+- Validate query thresholds and all namespace/period refs.
+- Clarify replay, erasure, simulation-test, and unreleased-candidate limitations.
 
 ### Added
 
-- First release of `@vllnt/convex-progression`.
+- Initial unpublished candidate of `@vllnt/convex-progression`.
 - `accrue`, `recordActivity`, `get` (optional threshold recompute), `reset`,
   `eraseSubject` (batched).

@@ -38,11 +38,16 @@ await xp.recordActivity(ctx, subjectRef, "solo", today, [], {
 
 ## Installation
 
+Unreleased candidate (`0.1.0`); registry availability is not asserted. The command
+below applies after publication. For pre-release evaluation, install a locally
+built package tarball.
+
 ```bash
 pnpm add @vllnt/convex-progression
 ```
 
-Peer dependency: `convex@^1.45.0`.
+Peer dependency: `convex@^1.45.0`; Node.js ≥20 (development toolchain:
+Node 20.19+ or 22.12+).
 
 ## Usage
 
@@ -98,6 +103,14 @@ Backend-only — no `./react` entry.
 
 - Auth-agnostic — the host resolves identity and passes an opaque `subjectRef`.
 - Tables sandboxed — reached only through the exported functions.
+- The host authorizes every read/write, derives scope and period keys, deduplicates
+  award events, and rejects late activity. See [lifecycle limits](docs/API.md#lifecycle-and-retries).
+
+## Multiple mounts
+
+Mount with `app.use(progression, { name: "gameProgress" })` and separately with
+`{ name: "learningProgress" }`; construct a client for each generated component
+reference. Each mount has isolated tables and scheduled work.
 
 ## Testing
 
@@ -106,7 +119,21 @@ pnpm test
 pnpm test:coverage
 ```
 
-Tests run against the real component runtime via `convex-test` (`@edge-runtime/vm`).
+Tests use the `convex-test` in-memory simulation (`@edge-runtime/vm`), not a real
+Convex backend. They do not prove production OCC retries or scheduler behavior.
+
+`node scripts/check-pack.mjs` checks tarball imports and NodeNext consumer types.
+For a separate **local backend** concurrency/scheduler smoke test, provision an
+anonymous deployment in an isolated HOME (never a cloud/production deployment):
+
+```bash
+HOME=/tmp/progression-audit-home CONVEX_AGENT_MODE=anonymous pnpm convex dev --once --local-cloud-port 3320 --local-site-port 3321 --typecheck disable
+HOME=/tmp/progression-audit-home CONVEX_AGENT_MODE=anonymous node scripts/check-local.mjs
+```
+
+The probe starts/stops its own CLI and backend. This is bounded smoke evidence,
+not proof of every conflict schedule or production workload. Example wrappers
+accept raw refs and awards for testing only; they are not production auth gates.
 
 ## Contributing
 
@@ -137,11 +164,15 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
-## [0.1.0] - 2026-09-11
+### Fixed
+
+- Bound XP/streak arithmetic and reject silently lost awards.
+- Validate query thresholds and all namespace/period refs.
+- Clarify replay, erasure, simulation-test, and unreleased-candidate limitations.
 
 ### Added
 
-- First release of `@vllnt/convex-progression`.
+- Initial unpublished candidate of `@vllnt/convex-progression`.
 - `accrue`, `recordActivity`, `get` (optional threshold recompute), `reset`,
   `eraseSubject` (batched).
 
@@ -160,20 +191,26 @@ import { Progression } from "@vllnt/convex-progression";
 const xp = new Progression(components.progression, { defaultScope: "global" });
 ```
 
-`subjectRef` and `key` are opaque host strings (1..256 characters). Never take
-`delta` or `thresholds` from an end-user. `thresholds` must be strictly increasing
-and ≥ 0.
+`subjectRef`, `key`, `scope`, `periodKey`, and provided `expectedPrevious` are
+opaque host strings (1..256 UTF-16 code units). Never trust these, `delta`, or
+`thresholds` from an end-user without host authorization. `thresholds` must be
+strictly increasing, finite, and in `0..Number.MAX_SAFE_INTEGER` (empty is valid).
+These rules apply to reads as well as writes, including missing-row queries.
 
 ### `accrue(ctx, subjectRef, key, delta, thresholds, scope?)`
 
-Adds `delta` XP (`delta` must be a positive finite number). `level` is the count
-of `thresholds` the XP has reached. `leveledUp` is true when level increased.
+Adds `delta` XP (positive finite, at most `Number.MAX_SAFE_INTEGER`). Fractions
+are supported with JavaScript floating-point rounding. Rejects totals above that
+bound or an addition that makes no progress (`XP_OVERFLOW`). `level` counts
+reached thresholds. `previousLevel` is the stored level from the previous write;
+`leveledUp` compares against it, so a changed ladder can itself produce a level-up.
 
 ### `recordActivity(ctx, subjectRef, key, periodKey, thresholds, opts?)`
 
 `opts`: `{ scope?, expectedPrevious? }`.
 
-- Same `periodKey` as stored → no-op (`streakDelta: 0`).
+- Same `periodKey` as stored → streak unchanged (`streakDelta: 0`), but level
+  is recomputed and `updatedAt` is refreshed.
 - `lastPeriodKey === expectedPrevious` → streak + 1.
 - Otherwise → streak resets to 1.
 
@@ -188,7 +225,31 @@ Deletes that `(scope, subjectRef, key)` row.
 
 ### `eraseSubject(ctx, subjectRef, scope?, batch?)`
 
-Deletes up to `batch` rows (default 200, max 500) and reschedules until clean.
+Deletes up to `batch` rows (default 200, positive integer clamped to 500),
+returning only this pass's count. A full batch atomically schedules another pass;
+there is no completion token or aggregate count.
+
+### Lifecycle and retries
+
+- `accrue` is additive, **not event-idempotent**. Host mutations should deduplicate
+  event IDs atomically with awards. Convex transaction retries are distinct from
+  submitting a new logical award request.
+- Periods are opaque, not ordered. Only the latest period is remembered. Replaying
+  an older period can reset/rewind a streak; the host must reject stale events and
+  serialize its period policy. `expectedPrevious` declares adjacency, not a CAS
+  precondition. Streaks exceeding `MAX_SAFE_INTEGER` reject with `STREAK_OVERFLOW`.
+- Erase has no tombstone or write fence. Gate writes before starting erasure and
+  keep them gated until a host-controlled completion check. Concurrent/new writes
+  may be deleted by scheduled passes or survive after the final pass. Reset does
+  not cancel pending subject erasure. Schedule execution failures require host
+  monitoring and retry; this component has no durable completion status.
+- `get` with thresholds only recomputes the returned level; it does not persist
+  the ladder or level. Threshold policy consistency belongs to the host.
+
+Validation failures use `ConvexError` data `{ code, message }`: `INVALID_REF`,
+`INVALID_THRESHOLDS`, `INVALID_DELTA`, `INVALID_BATCH`, `XP_OVERFLOW`, or
+`STREAK_OVERFLOW`. There are no component logs; hosts should monitor rejected
+calls and scheduled-function failures without logging sensitive refs.
 
 
 ---
@@ -219,8 +280,8 @@ export function levelForXp(xp: number, thresholds: readonly number[]): number {
 
 export function assertThresholds(thresholds: readonly number[]): void {
   thresholds.reduce<number | undefined>((previous, threshold) => {
-    if (!Number.isFinite(threshold) || threshold < 0) {
-      throw new Error("INVALID_THRESHOLDS: thresholds must be finite and ≥ 0");
+    if (!Number.isFinite(threshold) || threshold < 0 || threshold > Number.MAX_SAFE_INTEGER) {
+      throw new Error("INVALID_THRESHOLDS: thresholds must be finite and in 0..MAX_SAFE_INTEGER");
     }
     if (previous !== undefined && threshold <= previous) {
       throw new Error(
@@ -515,32 +576,23 @@ export const activityResult = v.object({
 
 ---
 
-## src/component/mutations.ts
+## src/component/validation.ts
 
 ```ts
-import { ConvexError, v } from "convex/values";
-import { api } from "./_generated/api";
-import { mutation } from "./_generated/server";
-import {
-  assertThresholds,
-  DEFAULT_ERASE_BATCH,
-  MAX_ERASE_BATCH,
-  levelForXp,
-  MAX_REF_LENGTH,
-} from "../shared";
-import { accrueResult, activityResult } from "./validators";
+import { ConvexError } from "convex/values";
+import { assertThresholds, MAX_REF_LENGTH } from "../shared";
 
-function fail(code: string, message: string): never {
+export function fail(code: string, message: string): never {
   throw new ConvexError({ code, message });
 }
 
-function requireRef(value: string, name: string): void {
+export function requireRef(value: string, name: string): void {
   if (value.length === 0 || value.length > MAX_REF_LENGTH) {
     fail("INVALID_REF", `${name} must be 1..${MAX_REF_LENGTH} characters`);
   }
 }
 
-function parseThresholds(thresholds: number[]): number[] {
+export function parseThresholds(thresholds: number[]): number[] {
   try {
     assertThresholds(thresholds);
   } catch (error) {
@@ -551,6 +603,25 @@ function parseThresholds(thresholds: number[]): number[] {
   }
   return thresholds;
 }
+
+```
+
+---
+
+## src/component/mutations.ts
+
+```ts
+import { v } from "convex/values";
+import { api } from "./_generated/api";
+import { mutation } from "./_generated/server";
+import {
+  DEFAULT_ERASE_BATCH,
+  MAX_ERASE_BATCH,
+  levelForXp,
+} from "../shared";
+import { accrueResult, activityResult } from "./validators";
+
+import { fail, parseThresholds, requireRef } from "./validation";
 
 export const accrue = mutation({
   args: {
@@ -564,8 +635,9 @@ export const accrue = mutation({
   handler: async (ctx, args) => {
     requireRef(args.subjectRef, "subjectRef");
     requireRef(args.key, "key");
-    if (!Number.isFinite(args.delta) || args.delta <= 0) {
-      fail("INVALID_DELTA", "delta must be a positive finite number");
+    requireRef(args.scope, "scope");
+    if (!Number.isFinite(args.delta) || args.delta <= 0 || args.delta > Number.MAX_SAFE_INTEGER) {
+      fail("INVALID_DELTA", "delta must be positive and at most MAX_SAFE_INTEGER");
     }
     const thresholds = parseThresholds(args.thresholds);
     const existing = await ctx.db
@@ -580,6 +652,9 @@ export const accrue = mutation({
     const now = Date.now();
     const previousLevel = existing?.level ?? 0;
     const xp = (existing?.xp ?? 0) + args.delta;
+    if (!Number.isFinite(xp) || xp > Number.MAX_SAFE_INTEGER || xp <= (existing?.xp ?? 0)) {
+      fail("XP_OVERFLOW", "XP exceeds the safe bound or delta is lost to floating-point precision");
+    }
     const level = levelForXp(xp, thresholds);
     const row = {
       lastPeriodKey: existing?.lastPeriodKey,
@@ -616,7 +691,11 @@ export const recordActivity = mutation({
   handler: async (ctx, args) => {
     requireRef(args.subjectRef, "subjectRef");
     requireRef(args.key, "key");
+    requireRef(args.scope, "scope");
     requireRef(args.periodKey, "periodKey");
+    if (args.expectedPrevious !== undefined) {
+      requireRef(args.expectedPrevious, "expectedPrevious");
+    }
     const thresholds = parseThresholds(args.thresholds);
     const existing = await ctx.db
       .query("progress")
@@ -639,6 +718,9 @@ export const recordActivity = mutation({
         : consecutive && existing !== null
           ? existing.streak + 1
           : 1;
+    if (!Number.isSafeInteger(streak)) {
+      fail("STREAK_OVERFLOW", "streak exceeds MAX_SAFE_INTEGER");
+    }
     const streakDelta = samePeriod ? 0 : 1;
     const row = {
       lastPeriodKey: args.periodKey,
@@ -672,6 +754,7 @@ export const reset = mutation({
   handler: async (ctx, args) => {
     requireRef(args.subjectRef, "subjectRef");
     requireRef(args.key, "key");
+    requireRef(args.scope, "scope");
     const existing = await ctx.db
       .query("progress")
       .withIndex("by_scope_subject_key", (q) =>
@@ -697,6 +780,7 @@ export const eraseSubject = mutation({
   returns: v.number(),
   handler: async (ctx, args) => {
     requireRef(args.subjectRef, "subjectRef");
+    requireRef(args.scope, "scope");
     const raw = args.batch ?? DEFAULT_ERASE_BATCH;
     if (!Number.isInteger(raw)) {
       fail("INVALID_BATCH", "batch must be a positive integer");
@@ -734,6 +818,7 @@ import { v } from "convex/values";
 import { query } from "./_generated/server";
 import { levelForXp } from "../shared";
 import { progressState } from "./validators";
+import { parseThresholds, requireRef } from "./validation";
 
 export const get = query({
   args: {
@@ -744,6 +829,12 @@ export const get = query({
   },
   returns: v.union(v.null(), progressState),
   handler: async (ctx, args) => {
+    requireRef(args.subjectRef, "subjectRef");
+    requireRef(args.key, "key");
+    requireRef(args.scope, "scope");
+    if (args.thresholds !== undefined) {
+      parseThresholds(args.thresholds);
+    }
     const row = await ctx.db
       .query("progress")
       .withIndex("by_scope_subject_key", (q) =>

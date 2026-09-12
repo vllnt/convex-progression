@@ -2,13 +2,15 @@
 
 > XP, levels, and streak windows as a Convex component
 
-`@vllnt/convex-progression` is a publishable Convex component. It targets `convex@^1.45.0`.
+`@vllnt/convex-progression` is an unpublished candidate Convex component. It targets `convex@^1.45.0`.
 It stores one sandboxed table — `progress` (one row per `(scope, subjectRef, key)`: `xp`, `level`,
 `streak`, `maxStreak`, `lastPeriodKey`). `accrue` adds XP; `level` is the count of host-supplied
 `thresholds` that XP has reached. `recordActivity` takes a host `periodKey` and optional
-`expectedPrevious` (same period is a no-op; match continues the streak; a gap resets to 1).
+`expectedPrevious` (same period leaves the streak unchanged but refreshes level/timestamp; match continues the streak; a gap resets to 1).
 `get` can recompute `level` when the host passes `thresholds`. `eraseSubject` deletes in bounded
-batches. The host owns auth, `subjectRef`, `key`, `delta`, and `thresholds` (never take those from
+batches without a write fence or completion token. XP is bounded by MAX_SAFE_INTEGER;
+reads validate thresholds too. Award requests are not event-idempotent; hosts must deduplicate
+awards, reject late periods, and fence writes during erase. The host owns auth, `subjectRef`, `key`, `delta`, and `thresholds` (never take those from
 the end-user). Distinct from `@vllnt/convex-wallet` (balances) and `@vllnt/convex-quota` (resetting
 caps).
 
@@ -22,7 +24,7 @@ caps).
 ## Examples
 
 - [Example component wrapper](example/convex/example.ts): Host-app wrapper functions
-- [Example tests](example/convex/example.test.ts): End-to-end usage coverage with `convex-test`
+- [Example tests](example/convex/example.test.ts): Simulated usage coverage with `convex-test` (not a real backend)
 
 ## Optional
 

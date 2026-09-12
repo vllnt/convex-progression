@@ -30,11 +30,16 @@ await xp.recordActivity(ctx, subjectRef, "solo", today, [], {
 
 ## Installation
 
+Unreleased candidate (`0.1.0`); registry availability is not asserted. The command
+below applies after publication. For pre-release evaluation, install a locally
+built package tarball.
+
 ```bash
 pnpm add @vllnt/convex-progression
 ```
 
-Peer dependency: `convex@^1.45.0`.
+Peer dependency: `convex@^1.45.0`; Node.js ≥20 (development toolchain:
+Node 20.19+ or 22.12+).
 
 ## Usage
 
@@ -90,6 +95,14 @@ Backend-only — no `./react` entry.
 
 - Auth-agnostic — the host resolves identity and passes an opaque `subjectRef`.
 - Tables sandboxed — reached only through the exported functions.
+- The host authorizes every read/write, derives scope and period keys, deduplicates
+  award events, and rejects late activity. See [lifecycle limits](docs/API.md#lifecycle-and-retries).
+
+## Multiple mounts
+
+Mount with `app.use(progression, { name: "gameProgress" })` and separately with
+`{ name: "learningProgress" }`; construct a client for each generated component
+reference. Each mount has isolated tables and scheduled work.
 
 ## Testing
 
@@ -98,7 +111,21 @@ pnpm test
 pnpm test:coverage
 ```
 
-Tests run against the real component runtime via `convex-test` (`@edge-runtime/vm`).
+Tests use the `convex-test` in-memory simulation (`@edge-runtime/vm`), not a real
+Convex backend. They do not prove production OCC retries or scheduler behavior.
+
+`node scripts/check-pack.mjs` checks tarball imports and NodeNext consumer types.
+For a separate **local backend** concurrency/scheduler smoke test, provision an
+anonymous deployment in an isolated HOME (never a cloud/production deployment):
+
+```bash
+HOME=/tmp/progression-audit-home CONVEX_AGENT_MODE=anonymous pnpm convex dev --once --local-cloud-port 3320 --local-site-port 3321 --typecheck disable
+HOME=/tmp/progression-audit-home CONVEX_AGENT_MODE=anonymous node scripts/check-local.mjs
+```
+
+The probe starts/stops its own CLI and backend. This is bounded smoke evidence,
+not proof of every conflict schedule or production workload. Example wrappers
+accept raw refs and awards for testing only; they are not production auth gates.
 
 ## Contributing
 

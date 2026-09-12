@@ -63,3 +63,5 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
+      - run: node scripts/check-pack.mjs
+      - run: pnpm generate:llms && git diff --exit-code -- llms-full.txt

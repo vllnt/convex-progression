@@ -7,7 +7,12 @@
   "packageManager": "pnpm@9.15.4",
   "files": [
     "dist",
-    "src"
+    "src",
+    "!src/**/*.test.ts",
+    "docs/API.md",
+    "CHANGELOG.md",
+    "llms.txt",
+    "llms-full.txt"
   ],
   "exports": {
     "./package.json": "./package.json",
@@ -39,8 +44,8 @@
     "build:clean": "rm -rf dist *.tsbuildinfo && pnpm build:codegen",
     "typecheck": "tsc --noEmit",
     "typecheck:ci": "tsc --noEmit --project tsconfig.ci.json",
-    "lint": "pnpm check:agents && eslint .",
-    "test": "vitest run --passWithNoTests",
+    "lint": "pnpm check:agents && eslint . --max-warnings=0",
+    "test": "vitest run",
     "test:watch": "vitest --typecheck --clearScreen false",
     "test:coverage": "vitest run --coverage --coverage.reporter=text",
     "generate:llms": "node scripts/generate-llms.mjs",
@@ -85,7 +90,7 @@
     "url": "https://github.com/vllnt/convex-progression"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "publishConfig": {
     "access": "public"

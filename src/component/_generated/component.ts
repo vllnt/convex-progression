@@ -10,15 +10,17 @@
 
 import type { FunctionReference } from "convex/server";
 
-type ProgressState = {
-  lastPeriodKey?: string;
-  level: number;
-  maxStreak: number;
-  streak: number;
-  updatedAt: number;
-  xp: number;
-};
-
+/**
+ * A utility for referencing a Convex component's exposed API.
+ *
+ * Useful when expecting a parameter like `components.myComponent`.
+ * Usage:
+ * ```ts
+ * async function myFunction(ctx: QueryCtx, component: ComponentApi) {
+ *   return ctx.runQuery(component.someFile.someQuery, { ...args });
+ * }
+ * ```
+ */
 export type ComponentApi<Name extends string | undefined = string | undefined> =
   {
     mutations: {
@@ -30,9 +32,18 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           key: string;
           scope: string;
           subjectRef: string;
-          thresholds: number[];
+          thresholds: Array<number>;
         },
-        ProgressState & { leveledUp: boolean; previousLevel: number },
+        {
+          lastPeriodKey?: string;
+          level: number;
+          leveledUp: boolean;
+          maxStreak: number;
+          previousLevel: number;
+          streak: number;
+          updatedAt: number;
+          xp: number;
+        },
         Name
       >;
       eraseSubject: FunctionReference<
@@ -51,9 +62,17 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           periodKey: string;
           scope: string;
           subjectRef: string;
-          thresholds: number[];
+          thresholds: Array<number>;
         },
-        ProgressState & { streakDelta: number },
+        {
+          lastPeriodKey?: string;
+          level: number;
+          maxStreak: number;
+          streak: number;
+          streakDelta: number;
+          updatedAt: number;
+          xp: number;
+        },
         Name
       >;
       reset: FunctionReference<
@@ -68,8 +87,20 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
       get: FunctionReference<
         "query",
         "internal",
-        { key: string; scope: string; subjectRef: string; thresholds?: number[] },
-        ProgressState | null,
+        {
+          key: string;
+          scope: string;
+          subjectRef: string;
+          thresholds?: Array<number>;
+        },
+        null | {
+          lastPeriodKey?: string;
+          level: number;
+          maxStreak: number;
+          streak: number;
+          updatedAt: number;
+          xp: number;
+        },
         Name
       >;
     };

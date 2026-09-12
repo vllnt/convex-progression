@@ -15,6 +15,7 @@ export default defineConfig({
         "src/component/mutations.ts",
         "src/component/queries.ts",
         "src/component/validators.ts",
+        "src/component/validation.ts",
         "src/component/schema.ts",
       ],
       thresholds: {

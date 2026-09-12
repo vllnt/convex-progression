@@ -10,6 +10,7 @@ const files = [
   "src/client/index.ts",
   "src/component/schema.ts",
   "src/component/validators.ts",
+  "src/component/validation.ts",
   "src/component/mutations.ts",
   "src/component/queries.ts",
   "src/test.ts",

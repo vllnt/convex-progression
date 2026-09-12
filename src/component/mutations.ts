@@ -1,36 +1,14 @@
-import { ConvexError, v } from "convex/values";
+import { v } from "convex/values";
 import { api } from "./_generated/api";
 import { mutation } from "./_generated/server";
 import {
-  assertThresholds,
   DEFAULT_ERASE_BATCH,
   MAX_ERASE_BATCH,
   levelForXp,
-  MAX_REF_LENGTH,
 } from "../shared";
 import { accrueResult, activityResult } from "./validators";
 
-function fail(code: string, message: string): never {
-  throw new ConvexError({ code, message });
-}
-
-function requireRef(value: string, name: string): void {
-  if (value.length === 0 || value.length > MAX_REF_LENGTH) {
-    fail("INVALID_REF", `${name} must be 1..${MAX_REF_LENGTH} characters`);
-  }
-}
-
-function parseThresholds(thresholds: number[]): number[] {
-  try {
-    assertThresholds(thresholds);
-  } catch (error) {
-    fail(
-      "INVALID_THRESHOLDS",
-      String(error).replace(/^Error:\s*/, "").replace(/^INVALID_THRESHOLDS:\s*/, ""),
-    );
-  }
-  return thresholds;
-}
+import { fail, parseThresholds, requireRef } from "./validation";
 
 export const accrue = mutation({
   args: {
@@ -44,8 +22,9 @@ export const accrue = mutation({
   handler: async (ctx, args) => {
     requireRef(args.subjectRef, "subjectRef");
     requireRef(args.key, "key");
-    if (!Number.isFinite(args.delta) || args.delta <= 0) {
-      fail("INVALID_DELTA", "delta must be a positive finite number");
+    requireRef(args.scope, "scope");
+    if (!Number.isFinite(args.delta) || args.delta <= 0 || args.delta > Number.MAX_SAFE_INTEGER) {
+      fail("INVALID_DELTA", "delta must be positive and at most MAX_SAFE_INTEGER");
     }
     const thresholds = parseThresholds(args.thresholds);
     const existing = await ctx.db
@@ -60,6 +39,9 @@ export const accrue = mutation({
     const now = Date.now();
     const previousLevel = existing?.level ?? 0;
     const xp = (existing?.xp ?? 0) + args.delta;
+    if (!Number.isFinite(xp) || xp > Number.MAX_SAFE_INTEGER || xp <= (existing?.xp ?? 0)) {
+      fail("XP_OVERFLOW", "XP exceeds the safe bound or delta is lost to floating-point precision");
+    }
     const level = levelForXp(xp, thresholds);
     const row = {
       lastPeriodKey: existing?.lastPeriodKey,
@@ -96,7 +78,11 @@ export const recordActivity = mutation({
   handler: async (ctx, args) => {
     requireRef(args.subjectRef, "subjectRef");
     requireRef(args.key, "key");
+    requireRef(args.scope, "scope");
     requireRef(args.periodKey, "periodKey");
+    if (args.expectedPrevious !== undefined) {
+      requireRef(args.expectedPrevious, "expectedPrevious");
+    }
     const thresholds = parseThresholds(args.thresholds);
     const existing = await ctx.db
       .query("progress")
@@ -119,6 +105,9 @@ export const recordActivity = mutation({
         : consecutive && existing !== null
           ? existing.streak + 1
           : 1;
+    if (!Number.isSafeInteger(streak)) {
+      fail("STREAK_OVERFLOW", "streak exceeds MAX_SAFE_INTEGER");
+    }
     const streakDelta = samePeriod ? 0 : 1;
     const row = {
       lastPeriodKey: args.periodKey,
@@ -152,6 +141,7 @@ export const reset = mutation({
   handler: async (ctx, args) => {
     requireRef(args.subjectRef, "subjectRef");
     requireRef(args.key, "key");
+    requireRef(args.scope, "scope");
     const existing = await ctx.db
       .query("progress")
       .withIndex("by_scope_subject_key", (q) =>
@@ -177,6 +167,7 @@ export const eraseSubject = mutation({
   returns: v.number(),
   handler: async (ctx, args) => {
     requireRef(args.subjectRef, "subjectRef");
+    requireRef(args.scope, "scope");
     const raw = args.batch ?? DEFAULT_ERASE_BATCH;
     if (!Number.isInteger(raw)) {
       fail("INVALID_BATCH", "batch must be a positive integer");

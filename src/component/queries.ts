@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { query } from "./_generated/server";
 import { levelForXp } from "../shared";
 import { progressState } from "./validators";
+import { parseThresholds, requireRef } from "./validation";
 
 export const get = query({
   args: {
@@ -12,6 +13,12 @@ export const get = query({
   },
   returns: v.union(v.null(), progressState),
   handler: async (ctx, args) => {
+    requireRef(args.subjectRef, "subjectRef");
+    requireRef(args.key, "key");
+    requireRef(args.scope, "scope");
+    if (args.thresholds !== undefined) {
+      parseThresholds(args.thresholds);
+    }
     const row = await ctx.db
       .query("progress")
       .withIndex("by_scope_subject_key", (q) =>
