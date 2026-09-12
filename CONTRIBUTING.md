@@ -51,7 +51,9 @@ Maintainers only:
 Prepare version changes through a reviewed, signed PR. The current-only
 `.github/workflows/publish.yml` dispatch publishes the reviewed `package.json`
 version on main with `RELEASE_ENABLED=true`; it never bumps versions or pushes
-commits. There is no local publishing fallback. See [release controls and
+commits. There is no local stable publishing fallback. The explicit
+[first-canary bootstrap](docs/FIRST_CANARY.md) defaults to dry run and cannot
+publish stable. See [release controls and
 recovery](docs/RELEASING.md). Do not enable or trigger publishing during audits.
 
 ## Reporting Issues
