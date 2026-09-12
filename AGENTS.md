@@ -1,5 +1,8 @@
 <!-- convex-ai-start -->
 This project uses [Convex](https://convex.dev) as its backend.
+
+When working on Convex code, **always read `example/convex/_generated/ai/guidelines.md` first** for
+important guidelines on how to correctly use Convex APIs and patterns.
 <!-- convex-ai-end -->
 
 # @vllnt/convex-progression
@@ -9,10 +12,25 @@ Standard (hub `AGENTS.md`).
 
 `AGENTS.md` is the sole agent-instruction source. Do not add `CLAUDE.md`.
 
+## Architecture
+
+```
+src/
+├── shared.ts
+├── test.ts
+├── client/
+└── component/   # schema, mutations, queries, validators, convex.config.ts
+```
+
 ## Ownership
 
 - **Component owns:** progress row, level-from-thresholds math, streak transitions.
 - **Host owns:** auth, `subjectRef` / `key`, the threshold list, period keys.
 - **Not this component:** wallet, quota, leaderboards (`@convex-dev/aggregate`).
 
-100% coverage is BLOCKING. No bare `v.any()`.
+## Conventions
+
+- Mutations in `mutations.ts`, queries in `queries.ts`.
+- Explicit `args` + `returns`. No bare `v.any()`.
+- 100% test coverage is BLOCKING.
+- `**/_generated/**` is Convex CLI-owned; run `pnpm codegen`.

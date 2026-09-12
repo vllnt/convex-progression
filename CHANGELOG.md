@@ -6,7 +6,10 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-09-11
+
 ### Added
 
 - First release of `@vllnt/convex-progression`.
-- `accrue`, `recordActivity`, `get`, `reset`, `eraseSubject`.
+- `accrue`, `recordActivity`, `get` (optional threshold recompute), `reset`,
+  `eraseSubject` (batched).
