@@ -3,15 +3,17 @@ import type {
   FunctionReference,
   FunctionReturnType,
 } from "convex/server";
+
+import { DEFAULT_SCOPE } from "../shared.js";
+
 import type {
   AccrueResult,
   ActivityResult,
   ProgressionOptions,
   ProgressState,
 } from "./types.js";
-import { DEFAULT_ERASE_BATCH, DEFAULT_SCOPE } from "../shared.js";
 
-export interface ProgressionComponent {
+export type ProgressionComponent = {
   mutations: {
     accrue: FunctionReference<
       "mutation",
@@ -61,24 +63,24 @@ export interface ProgressionComponent {
         subjectRef: string;
         thresholds?: number[];
       },
-      ProgressState | null
+      null | ProgressState
     >;
   };
-}
+};
 
-interface RunQueryCtx {
-  runQuery<Q extends FunctionReference<"query", "internal">>(
-    reference: Q,
-    args: FunctionArgs<Q>,
-  ): Promise<FunctionReturnType<Q>>;
-}
+type RunQueryCtx = {
+  runQuery<TQuery extends FunctionReference<"query", "internal">>(
+    reference: TQuery,
+    arguments_: FunctionArgs<TQuery>,
+  ): Promise<FunctionReturnType<TQuery>>;
+};
 
-interface RunMutationCtx {
-  runMutation<M extends FunctionReference<"mutation", "internal">>(
-    reference: M,
-    args: FunctionArgs<M>,
-  ): Promise<FunctionReturnType<M>>;
-}
+type RunMutationCtx = {
+  runMutation<TMutation extends FunctionReference<"mutation", "internal">>(
+    reference: TMutation,
+    arguments_: FunctionArgs<TMutation>,
+  ): Promise<FunctionReturnType<TMutation>>;
+};
 
 export class Progression {
   private readonly defaultScope: string;
@@ -94,6 +96,8 @@ export class Progression {
     return scope ?? this.defaultScope;
   }
 
+  // Public positional API retained for compatibility.
+  // eslint-disable-next-line max-params
   accrue(
     ctx: RunMutationCtx,
     subjectRef: string,
@@ -111,31 +115,35 @@ export class Progression {
     });
   }
 
+  // Public positional API retained for compatibility.
+  // eslint-disable-next-line max-params
   recordActivity(
     ctx: RunMutationCtx,
     subjectRef: string,
     key: string,
     periodKey: string,
     thresholds: number[],
-    opts: { expectedPrevious?: string; scope?: string } = {},
+    options: { expectedPrevious?: string; scope?: string } = {},
   ): Promise<ActivityResult> {
     return ctx.runMutation(this.component.mutations.recordActivity, {
-      expectedPrevious: opts.expectedPrevious,
+      expectedPrevious: options.expectedPrevious,
       key,
       periodKey,
-      scope: this.scopeOf(opts.scope),
+      scope: this.scopeOf(options.scope),
       subjectRef,
       thresholds,
     });
   }
 
+  // Public positional API retained for compatibility.
+  // eslint-disable-next-line max-params
   get(
     ctx: RunQueryCtx,
     subjectRef: string,
     key: string,
     scope?: string,
     thresholds?: number[],
-  ): Promise<ProgressState | null> {
+  ): Promise<null | ProgressState> {
     return ctx.runQuery(this.component.queries.get, {
       key,
       scope: this.scopeOf(scope),
@@ -144,6 +152,8 @@ export class Progression {
     });
   }
 
+  // Public positional API retained for compatibility.
+  // eslint-disable-next-line max-params
   reset(
     ctx: RunMutationCtx,
     subjectRef: string,
@@ -157,6 +167,8 @@ export class Progression {
     });
   }
 
+  // Public positional API retained for compatibility.
+  // eslint-disable-next-line max-params
   eraseSubject(
     ctx: RunMutationCtx,
     subjectRef: string,
@@ -171,4 +183,9 @@ export class Progression {
   }
 }
 
-export type { AccrueResult, ActivityResult, ProgressionOptions, ProgressState };
+export {
+  type AccrueResult,
+  type ActivityResult,
+  type ProgressionOptions,
+  type ProgressState,
+} from "./types.js";

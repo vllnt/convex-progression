@@ -1,8 +1,10 @@
 import { v } from "convex/values";
-import { query } from "./_generated/server";
+
 import { levelForXp } from "../shared";
-import { progressState } from "./validators";
+
+import { query } from "./_generated/server";
 import { parseThresholds, requireRef } from "./validation";
+import { progressState } from "./validators";
 
 export const get = query({
   args: {
@@ -11,36 +13,38 @@ export const get = query({
     subjectRef: v.string(),
     thresholds: v.optional(v.array(v.number())),
   },
-  returns: v.union(v.null(), progressState),
-  handler: async (ctx, args) => {
-    requireRef(args.subjectRef, "subjectRef");
-    requireRef(args.key, "key");
-    requireRef(args.scope, "scope");
-    if (args.thresholds !== undefined) {
-      parseThresholds(args.thresholds);
+  // Keep boundary validation and indexed read together.
+  // eslint-disable-next-line max-lines-per-function
+  handler: async (ctx, arguments_) => {
+    requireRef(arguments_.subjectRef, "subjectRef");
+    requireRef(arguments_.key, "key");
+    requireRef(arguments_.scope, "scope");
+    if (arguments_.thresholds !== undefined) {
+      parseThresholds(arguments_.thresholds);
     }
     const row = await ctx.db
       .query("progress")
       .withIndex("by_scope_subject_key", (q) =>
         q
-          .eq("scope", args.scope)
-          .eq("subjectRef", args.subjectRef)
-          .eq("key", args.key),
+          .eq("scope", arguments_.scope)
+          .eq("subjectRef", arguments_.subjectRef)
+          .eq("key", arguments_.key),
       )
-      .first();
+      .unique();
     if (row === null) {
       return null;
     }
     return {
       lastPeriodKey: row.lastPeriodKey,
       level:
-        args.thresholds === undefined
+        arguments_.thresholds === undefined
           ? row.level
-          : levelForXp(row.xp, args.thresholds),
+          : levelForXp(row.xp, arguments_.thresholds),
       maxStreak: row.maxStreak,
       streak: row.streak,
       updatedAt: row.updatedAt,
       xp: row.xp,
     };
   },
+  returns: v.union(v.null(), progressState),
 });

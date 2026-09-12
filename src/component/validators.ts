@@ -1,12 +1,12 @@
 import { v } from "convex/values";
 
 const progressFields = {
-  xp: v.number(),
-  level: v.number(),
-  streak: v.number(),
-  maxStreak: v.number(),
   lastPeriodKey: v.optional(v.string()),
+  level: v.number(),
+  maxStreak: v.number(),
+  streak: v.number(),
   updatedAt: v.number(),
+  xp: v.number(),
 };
 
 export const progressState = v.object(progressFields);

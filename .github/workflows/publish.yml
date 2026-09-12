@@ -9,21 +9,10 @@ on:
       - "pnpm-lock.yaml"
       - ".github/workflows/publish.yml"
   workflow_dispatch:
-    inputs:
-      bump:
-        description: "Release strategy"
-        required: true
-        default: current
-        type: choice
-        options:
-          - current
-          - patch
-          - minor
-          - major
 
 concurrency:
   group: publish-${{ github.event_name }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -112,12 +101,7 @@ jobs:
       - name: Prepare version
         id: version
         run: |
-          if [ "${{ inputs.bump }}" = "current" ]; then
-            VERSION=$(node -p "require('./package.json').version")
-          else
-            npm version ${{ inputs.bump }} --no-git-tag-version --ignore-scripts
-            VERSION=$(node -p "require('./package.json').version")
-          fi
+          VERSION=$(node -p "require('./package.json').version")
 
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
@@ -158,31 +142,16 @@ jobs:
             echo "CHANGELOG_EOF"
           } >> "$GITHUB_OUTPUT"
 
-      - name: Commit and tag
-        run: |
-          VERSION="${{ steps.version.outputs.version }}"
-
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          if git rev-parse "refs/tags/v$VERSION" >/dev/null 2>&1; then
-            echo "Tag v$VERSION already exists"
-            exit 1
-          fi
-
-          if ! git diff --quiet -- package.json; then
-            git add package.json
-            git commit -m "chore(release): v$VERSION"
-            git push origin main
-          fi
-
-          git tag -a "v$VERSION" -m "v$VERSION"
-          git push origin "v$VERSION"
-
       - name: Publish to npm
         run: |
           sed -i '/_authToken/d' "$NPM_CONFIG_USERCONFIG"
           unset NODE_AUTH_TOKEN
+          VERSION="${{ steps.version.outputs.version }}"
+          PKG=$(node -p "require('./package.json').name")
+          if npm view "$PKG@$VERSION" version >/dev/null 2>&1; then
+            echo "Version already exists; reconcile registry integrity and git state manually before retrying."
+            exit 1
+          fi
           npx -y npm@11 publish --tag latest --provenance --access public --ignore-scripts
 
       - name: Create GitHub Release
@@ -191,5 +160,6 @@ jobs:
           RELEASE_NOTES: ${{ steps.changelog.outputs.body }}
         run: |
           gh release create "v${{ steps.version.outputs.version }}" \
+            --target "$GITHUB_SHA" \
             --title "@vllnt/convex-progression v${{ steps.version.outputs.version }}" \
             --notes "$RELEASE_NOTES"

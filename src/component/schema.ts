@@ -8,14 +8,14 @@ import { v } from "convex/values";
  */
 export default defineSchema({
   progress: defineTable({
-    subjectRef: v.string(),
     key: v.string(),
-    scope: v.string(),
-    xp: v.number(),
-    level: v.number(),
-    streak: v.number(),
-    maxStreak: v.number(),
     lastPeriodKey: v.optional(v.string()),
+    level: v.number(),
+    maxStreak: v.number(),
+    scope: v.string(),
+    streak: v.number(),
+    subjectRef: v.string(),
     updatedAt: v.number(),
+    xp: v.number(),
   }).index("by_scope_subject_key", ["scope", "subjectRef", "key"]),
 });

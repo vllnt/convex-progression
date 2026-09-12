@@ -20,17 +20,23 @@ export function levelForXp(xp: number, thresholds: readonly number[]): number {
 }
 
 export function assertThresholds(thresholds: readonly number[]): void {
-  thresholds.reduce<number | undefined>((previous, threshold) => {
-    if (!Number.isFinite(threshold) || threshold < 0 || threshold > Number.MAX_SAFE_INTEGER) {
-      throw new Error("INVALID_THRESHOLDS: thresholds must be finite and in 0..MAX_SAFE_INTEGER");
+  thresholds.reduce<number>((previous, threshold) => {
+    if (
+      !Number.isFinite(threshold) ||
+      threshold < 0 ||
+      threshold > Number.MAX_SAFE_INTEGER
+    ) {
+      throw new Error(
+        "INVALID_THRESHOLDS: thresholds must be finite and in 0..MAX_SAFE_INTEGER",
+      );
     }
-    if (previous !== undefined && threshold <= previous) {
+    if (threshold <= previous) {
       throw new Error(
         "INVALID_THRESHOLDS: thresholds must be strictly increasing",
       );
     }
     return threshold;
-  }, undefined);
+  }, -1);
 }
 
 export function clampEraseBatch(batch: number): number {

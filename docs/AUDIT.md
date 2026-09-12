@@ -28,10 +28,13 @@ This is evidence for the current remediation, not a publication authorization.
 On Darwin arm64, Node 26.7.0, Convex 1.45.0:
 
 - `pnpm install --frozen-lockfile`
-- `pnpm build`, `pnpm typecheck`, `pnpm typecheck:ci`
+- `pnpm build`, `pnpm typecheck`, `pnpm typecheck:ci` (now also checks test and
+  example types with the runtime's Bundler module resolution)
 - `pnpm lint` (zero-warning gate)
-- `pnpm test:coverage`: 18 tests, 100% statements/branches/functions/lines,
-  including the newly extracted validation module (no coverage exclusions added).
+- `pnpm test:coverage`: 22 tests, 100% statements/branches/functions/lines,
+  including validation and published `src/test.ts` registration/module loaders.
+  The helper excludes test files from its production component module glob, not
+  from coverage. All registered module loaders execute in the regression suite.
 - Node 20.20.2 with pinned pnpm 9.15.4 independently passes build, CI typecheck,
   strict lint and 100% coverage. System pnpm 11 fails on Node20; CI explicitly
   installs the packageManager-pinned pnpm9, which avoids that mismatch.
@@ -42,14 +45,34 @@ On Darwin arm64, Node 26.7.0, Convex 1.45.0:
 - `HOME=/tmp/progression-audit-home CONVEX_AGENT_MODE=anonymous node scripts/check-local.mjs`:
   12 simultaneous additive writes preserve total XP, 8 same-period writes retain
   streak 1, scheduler drains four rows in one-row passes, other scope survives.
+  A second mount retains its own 7 XP while the first mount is erased, and a
+  write in the second mount does not appear in the first. This verifies real
+  mount isolation in addition to runtime scope isolation.
   The owned process group was stopped after verification. This tests real backend
   behavior but does not establish that every run experienced an OCC retry.
+
+## Rework
+
+- Published test registration accepts unrelated host schemas via a structural
+  registrar type; packed consumer compilation and runtime coverage include it.
+- Full typed base ESLint now covers client/shared/test helpers, component,
+  examples, configs and scripts. Focused style exceptions preserve positional
+  public APIs, atomic handlers, ordered tests, Convex null returns and fixture
+  endpoint names; no unsafe-type or validator rules are disabled.
+- Indexed logical-row lookups use `unique()`; duplicate-state regression proves
+  get/accrue/activity/reset fail rather than silently selecting one duplicate.
+- Regression tests demonstrate late d1/d2 replay and erase/recreation races;
+  these are intentional host-policy limitations, not tombstone guarantees.
+- Stable release no longer cancels in flight. npm publication precedes git tags;
+  an existing registry version stops the workflow for manual reconciliation.
+  Stable dispatch publishes the reviewed package version without bot commits or
+  protected-main pushes. See `docs/RELEASING.md` for recovery.
 
 ## Remaining limits / review prerequisites
 
 - Independent security/current-target verification is required before readiness.
-- Package AGENTS points to missing `example/convex/_generated/ai/guidelines.md`;
-  CLI generation did not produce it. No generated instruction file was fabricated.
+- Package AGENTS now links verified official Convex best practices instead of a
+  missing generated AI guidance file. No generated instruction file was fabricated.
 - `get`/mutations use a scoped subject/key index. Erase is capped at 500 rows/pass.
   Threshold processing remains linear and bounded by Convex argument limits;
   no new arbitrary ladder cap was imposed on supported callers.

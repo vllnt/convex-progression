@@ -1,27 +1,70 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, writeFileSync, readdirSync, rmSync } from "node:fs";
+import { mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-const dir = mkdtempSync(join(tmpdir(), "progression-pack-"));
-const run = (command, args, cwd = dir) => execFileSync(command, args, { cwd, stdio: "inherit" });
+const directory = mkdtempSync(join(tmpdir(), "progression-pack-"));
+/** @param {string} command @param {string[]} arguments_ @param {string} [cwd] */
+const run = (command, arguments_, cwd = directory) =>
+  execFileSync(command, arguments_, { cwd, stdio: "inherit" });
 try {
-  run("pnpm", ["pack", "--pack-destination", dir], process.cwd());
-  const tarball = readdirSync(dir).find((name) => name.endsWith(".tgz"));
+  run("pnpm", ["pack", "--pack-destination", directory], process.cwd());
+  const tarball = readdirSync(directory).find((name) => name.endsWith(".tgz"));
   assert.ok(tarball);
-  writeFileSync(join(dir, "package.json"), JSON.stringify({ private: true, type: "module", dependencies: { "@vllnt/convex-progression": `file:${join(dir, tarball)}`, convex: "1.45.0", typescript: "npm:@typescript/typescript6@6.0.2" } }));
+  writeFileSync(
+    join(directory, "package.json"),
+    JSON.stringify({
+      dependencies: {
+        "@vllnt/convex-progression": `file:${join(directory, tarball)}`,
+        convex: "1.45.0",
+        "convex-test": "0.0.56",
+        typescript: "npm:@typescript/typescript6@6.0.2",
+        vite: "8.2.2",
+      },
+      private: true,
+      type: "module",
+    }),
+  );
   run("pnpm", ["install", "--ignore-scripts"]);
-  writeFileSync(join(dir, "check.ts"), `import { Progression } from "@vllnt/convex-progression";
+  writeFileSync(
+    join(directory, "check.ts"),
+    `import { Progression } from "@vllnt/convex-progression";
 import component from "@vllnt/convex-progression/convex.config.js";
 import type { ComponentApi } from "@vllnt/convex-progression/_generated/component.js";
+import { register } from "@vllnt/convex-progression/test";
+import { convexTest } from "convex-test";
+import { defineSchema, defineTable } from "convex/server";
+import { v } from "convex/values";
+const host = defineSchema({ unrelated: defineTable({ title: v.string() }) });
+register(convexTest(host, {}), "alternate");
 declare const refs: ComponentApi;
 new Progression(refs);
 void component;
-`);
-  run("pnpm", ["exec", "tsc", "--noEmit", "--strict", "--skipLibCheck", "--target", "ES2022", "--module", "NodeNext", "--moduleResolution", "NodeNext", "check.ts"]);
-  run("node", ["--input-type=module", "-e", 'import {Progression} from "@vllnt/convex-progression"; import c from "@vllnt/convex-progression/convex.config.js"; if(typeof Progression!=="function" || !c) throw Error("bad exports");']);
-  console.log("PASS: packed NodeNext types and runtime root/config exports");
+`,
+  );
+  run("pnpm", [
+    "exec",
+    "tsc",
+    "--noEmit",
+    "--strict",
+    "--skipLibCheck",
+    "--target",
+    "ES2022",
+    "--module",
+    "NodeNext",
+    "--moduleResolution",
+    "NodeNext",
+    "--types",
+    "vite/client",
+    "check.ts",
+  ]);
+  run("node", [
+    "--input-type=module",
+    "-e",
+    'import {Progression} from "@vllnt/convex-progression"; import c from "@vllnt/convex-progression/convex.config.js"; if(typeof Progression!=="function" || !c) throw Error("bad exports");',
+  ]);
+  console.info("PASS: packed NodeNext types and runtime root/config exports");
 } finally {
-  rmSync(dir, { recursive: true, force: true });
+  rmSync(directory, { force: true, recursive: true });
 }

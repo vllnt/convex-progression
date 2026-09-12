@@ -1,23 +1,23 @@
 /** Public TypeScript surface for the progression client. */
 
-export interface ProgressState {
-  xp: number;
-  level: number;
-  streak: number;
-  maxStreak: number;
+export type ProgressState = {
   lastPeriodKey?: string;
+  level: number;
+  maxStreak: number;
+  streak: number;
   updatedAt: number;
-}
+  xp: number;
+};
 
-export interface AccrueResult extends ProgressState {
+export type AccrueResult = {
   leveledUp: boolean;
   previousLevel: number;
-}
+} & ProgressState;
 
-export interface ActivityResult extends ProgressState {
+export type ActivityResult = {
   streakDelta: number;
-}
+} & ProgressState;
 
-export interface ProgressionOptions {
+export type ProgressionOptions = {
   defaultScope?: string;
-}
+};

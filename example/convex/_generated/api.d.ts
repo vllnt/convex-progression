@@ -48,4 +48,5 @@ export declare const internal: FilterApi<
 
 export declare const components: {
   progression: import("../../../src/component/_generated/component.js").ComponentApi<"progression">;
+  secondary: import("../../../src/component/_generated/component.js").ComponentApi<"secondary">;
 };
