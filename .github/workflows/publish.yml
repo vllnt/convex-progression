@@ -34,7 +34,7 @@ jobs:
       - run: pnpm test:coverage
       - run: pnpm build
       - run: node scripts/check-pack.mjs
-      - run: pnpm generate:llms && git diff --exit-code -- llms-full.txt
+      - run: pnpm generate:llms && git diff --exit-code -- llms.txt
 
   canary:
     name: Publish Canary

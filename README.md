@@ -1,4 +1,5 @@
 <!-- Badges -->
+
 [![convex-component](https://img.shields.io/badge/convex-component-EE342F.svg)](https://www.convex.dev/components)
 [![npm](https://img.shields.io/npm/v/@vllnt/convex-progression.svg)](https://www.npmjs.com/package/@vllnt/convex-progression)
 [![CI](https://github.com/vllnt/convex-progression/actions/workflows/ci.yml/badge.svg)](https://github.com/vllnt/convex-progression/actions/workflows/ci.yml)
@@ -9,7 +10,8 @@
 XP → level and streak windows as a Convex component.
 
 Not money (`@vllnt/convex-wallet`), not a resetting cap (`@vllnt/convex-quota`).
-The host passes opaque `subjectRef` + `key` and the level `thresholds` on each write.
+The host passes opaque `subjectRef` + `key` and the level `thresholds` on each
+write.
 
 ```ts
 const xp = new Progression(components.progression);
@@ -21,25 +23,28 @@ await xp.recordActivity(ctx, subjectRef, "solo", today, [], {
 
 ## Features
 
-- **XP / level** — `accrue` adds XP; `level` is how many host `thresholds` that XP has reached.
-- **Streaks** — `recordActivity` with a host `periodKey`; pass `expectedPrevious` to continue a streak or reset on a gap.
+- **XP / level** — `accrue` adds XP; `level` is how many host `thresholds` that
+  XP has reached.
+- **Streaks** — `recordActivity` with a host `periodKey`; pass
+  `expectedPrevious` to continue a streak or reset on a gap.
 - **Opaque refs** — `subjectRef` and `key` are host strings (max 256 chars).
-- **Recompute on read** — `get(..., thresholds)` can recompute `level` if the host changed the ladder.
-- **Bounded erase** — `eraseSubject` deletes in batches and reschedules until clean.
+- **Recompute on read** — `get(..., thresholds)` can recompute `level` if the
+  host changed the ladder.
+- **Bounded erase** — `eraseSubject` deletes in batches and reschedules until
+  clean.
 - **Scopes** — default `"global"`.
 
 ## Installation
 
-Unreleased candidate (`0.1.0`); registry availability is not asserted. The command
-below applies after publication. For pre-release evaluation, install a locally
-built package tarball.
+Public canary releases are available. This guide follows `canary`; the npm
+`latest` tag also currently points to a prerelease, not a stable release.
 
 ```bash
-pnpm add @vllnt/convex-progression
+pnpm add @vllnt/convex-progression@canary
 ```
 
-Peer dependency: `convex@^1.45.0`; Node.js ≥20 (development toolchain:
-Node 20.19+ or 22.12+).
+Peer dependency: `convex@^1.45.0`; Node.js ≥20 (development toolchain: Node
+20.19+ or 22.12+).
 
 ## Usage
 
@@ -73,19 +78,39 @@ export const onWin = mutation({
 });
 ```
 
-**Host rules:** never take `delta` or `thresholds` from the end-user.
+After mounting, run `pnpm convex dev` to generate component references. **Host
+rules:** authenticate and authorize the subject; never take `delta` or
+`thresholds` from the end-user. The hardcoded identity and dates are
+illustrative, not a production identity or calendar policy.
+
+## Configuration and limits
+
+`new Progression(component, { defaultScope: "global" })` sets the sole client
+option. `recordActivity` accepts `{ scope?, expectedPrevious? }`; without a
+matching previous period, a different period starts a streak of 1. Thresholds
+are host-supplied on writes, strictly increasing and within 0–MAX_SAFE_INTEGER;
+empty arrays are valid. XP deltas are positive finite numbers (fractions
+allowed) and totals cannot exceed MAX_SAFE_INTEGER. Erase batches default to 200
+and clamp to 500.
+
+Awards are not event-idempotent: deduplicate logical retries in the host. Period
+labels are not ordered; reject stale activity before calling the component.
+There is no leaderboard or automatic calendar tracking; compose an official
+aggregate for rankings and derive calendar periods in the host.
 
 ## API Reference
 
-| Method | Kind | Result |
-|--------|------|--------|
-| `accrue(ctx, subjectRef, key, delta, thresholds, scope?)` | mutation | `{ xp, level, streak, maxStreak, leveledUp, previousLevel, ... }` |
-| `recordActivity(ctx, subjectRef, key, periodKey, thresholds, opts?)` | mutation | `{ streak, streakDelta, maxStreak, ... }` |
-| `get(ctx, subjectRef, key, scope?, thresholds?)` | query | progress or `null` |
-| `reset(ctx, subjectRef, key, scope?)` | mutation | `null` |
-| `eraseSubject(ctx, subjectRef, scope?, batch?)` | mutation | `number` deleted this pass |
+| Method                                                               | Kind     | Result                                         |
+| -------------------------------------------------------------------- | -------- | ---------------------------------------------- |
+| `accrue(ctx, subjectRef, key, delta, thresholds, scope?)`            | mutation | `ProgressState & { leveledUp, previousLevel }` |
+| `recordActivity(ctx, subjectRef, key, periodKey, thresholds, opts?)` | mutation | `ProgressState & { streakDelta }`              |
+| `get(ctx, subjectRef, key, scope?, thresholds?)`                     | query    | `ProgressState \| null`                        |
+| `reset(ctx, subjectRef, key, scope?)`                                | mutation | `null`                                         |
+| `eraseSubject(ctx, subjectRef, scope?, batch?)`                      | mutation | `number` deleted this pass                     |
 
-Full reference: [docs/API.md](docs/API.md).
+`ProgressState` is
+`{ xp, level, streak, maxStreak, updatedAt, lastPeriodKey? }`. Full reference:
+[docs/API.md](docs/API.md).
 
 ## React
 
@@ -95,8 +120,9 @@ Backend-only — no `./react` entry.
 
 - Auth-agnostic — the host resolves identity and passes an opaque `subjectRef`.
 - Tables sandboxed — reached only through the exported functions.
-- The host authorizes every read/write, derives scope and period keys, deduplicates
-  award events, and rejects late activity. See [lifecycle limits](docs/API.md#lifecycle-and-retries).
+- The host authorizes every read/write, derives scope and period keys,
+  deduplicates award events, and rejects late activity. See
+  [lifecycle limits](docs/API.md#lifecycle-and-retries).
 
 ## Multiple mounts
 
@@ -111,12 +137,14 @@ pnpm test
 pnpm test:coverage
 ```
 
-Tests use the `convex-test` in-memory simulation (`@edge-runtime/vm`), not a real
-Convex backend. They do not prove production OCC retries or scheduler behavior.
+Tests use the `convex-test` in-memory simulation (`@edge-runtime/vm`), not a
+real Convex backend. They do not prove production OCC retries or scheduler
+behavior.
 
-`node scripts/check-pack.mjs` checks tarball imports and NodeNext consumer types.
-For a separate **local backend** concurrency/scheduler smoke test, provision an
-anonymous deployment in an isolated HOME (never a cloud/production deployment):
+`node scripts/check-pack.mjs` checks tarball imports and NodeNext consumer
+types. For a separate **local backend** concurrency/scheduler smoke test,
+provision an anonymous deployment in an isolated HOME (never a cloud/production
+deployment):
 
 ```bash
 HOME=/tmp/progression-audit-home CONVEX_AGENT_MODE=anonymous pnpm convex dev --once --local-cloud-port 3320 --local-site-port 3321 --typecheck disable
@@ -133,9 +161,11 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Author
 
-Built by [bntvllnt](https://github.com/bntvllnt) · [bntvllnt.com](https://bntvllnt.com) · [X @bntvllnt](https://x.com/bntvllnt)
+Built by [bntvllnt](https://github.com/bntvllnt) ·
+[bntvllnt.com](https://bntvllnt.com) · [X @bntvllnt](https://x.com/bntvllnt)
 
-Part of the [@vllnt](https://github.com/vllnt) Convex component fleet — [vllnt.com](https://vllnt.com)
+Part of the [@vllnt](https://github.com/vllnt) Convex component fleet —
+[vllnt.com](https://vllnt.com)
 
 If this is useful, [sponsor the work](https://github.com/sponsors/bntvllnt).
 
