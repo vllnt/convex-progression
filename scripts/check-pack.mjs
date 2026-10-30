@@ -18,9 +18,9 @@ try {
       dependencies: {
         "@vllnt/convex-progression": `file:${join(directory, tarball)}`,
         convex: "1.45.0",
-        "convex-test": "0.0.56",
+        "convex-test": "0.0.65",
         typescript: "npm:@typescript/typescript6@6.0.2",
-        vite: "8.2.2",
+        vite: "8.3.5",
       },
       private: true,
       type: "module",
