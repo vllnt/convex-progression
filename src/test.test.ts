@@ -16,6 +16,8 @@ test("register accepts a different host schema and custom component name", async
       expect(componentSchema).toBeDefined();
       expect(Object.keys(modules).length).toBeGreaterThan(0);
       loaders.push(...Object.values(modules));
+      // The real API returns the component's function references.
+      return undefined as never;
     },
   });
   await Promise.all(loaders.map((load) => load()));
