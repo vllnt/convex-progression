@@ -1,10 +1,10 @@
 import { v } from "convex/values";
 
-import { levelForXp } from "../shared";
+import { levelForXp } from "../shared.js";
 
-import { query } from "./_generated/server";
-import { parseThresholds, requireRef } from "./validation";
-import { progressState } from "./validators";
+import { query } from "./_generated/server.js";
+import { parseThresholds } from "./validation.js";
+import { progressState } from "./validators.js";
 
 export const get = query({
   args: {
@@ -13,12 +13,9 @@ export const get = query({
     subjectRef: v.string(),
     thresholds: v.optional(v.array(v.number())),
   },
-  // Keep boundary validation and indexed read together.
-  // eslint-disable-next-line max-lines-per-function
   handler: async (ctx, arguments_) => {
-    requireRef(arguments_.subjectRef, "subjectRef");
-    requireRef(arguments_.key, "key");
-    requireRef(arguments_.scope, "scope");
+    // Refs are not validated here: a reactive query may run with placeholder
+    // values (e.g. an empty id), and no row can exist for an invalid ref.
     if (arguments_.thresholds !== undefined) {
       parseThresholds(arguments_.thresholds);
     }

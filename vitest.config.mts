@@ -23,6 +23,8 @@ export default defineConfig({
     },
     environment: "edge-runtime",
     exclude: ["**/node_modules/**", "dist/**"],
+    // Shared dev hosts: keep test parallelism low.
+    maxWorkers: 2,
     typecheck: {
       tsconfig: "./tsconfig.test.json",
     },

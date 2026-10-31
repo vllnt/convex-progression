@@ -1,8 +1,8 @@
 import { convexTest } from "convex-test";
 import { expect, test, vi } from "vitest";
 
-import { api } from "./_generated/api";
-import schema from "./schema";
+import { api } from "./_generated/api.js";
+import schema from "./schema.js";
 
 const modules = import.meta.glob("./**/*.ts");
 const base = { key: "k", scope: "global", subjectRef: "s" };

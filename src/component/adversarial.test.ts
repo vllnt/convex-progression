@@ -1,8 +1,8 @@
 import { convexTest } from "convex-test";
 import { describe, expect, test, vi } from "vitest";
 
-import { api } from "./_generated/api";
-import schema from "./schema";
+import { api } from "./_generated/api.js";
+import schema from "./schema.js";
 
 const modules = import.meta.glob("./**/*.ts");
 const base = { key: "k", scope: "global", subjectRef: "s" };
@@ -50,13 +50,37 @@ describe("adversarial boundaries", () => {
     expect(
       await t.query(api.queries.get, { ...base, thresholds: [] }),
     ).toBeNull();
+    // Reactive queries may run with placeholder refs: no row exists, so null.
+    for (const field of ["subjectRef", "key", "scope"] as const) {
+      for (const value of ["", "x".repeat(257)]) {
+        expect(
+          await t.query(api.queries.get, { ...base, [field]: value }),
+        ).toBeNull();
+      }
+    }
     for (const field of ["subjectRef", "key", "scope"] as const) {
       for (const value of ["", "x".repeat(257)]) {
         await expect(
-          t.query(api.queries.get, { ...base, [field]: value }),
+          t.mutation(api.mutations.accrue, { ...award, [field]: value }),
         ).rejects.toThrow("INVALID_REF");
       }
     }
+    await expect(
+      t.mutation(api.mutations.recordActivity, {
+        ...base,
+        periodKey: "",
+        thresholds: [],
+      }),
+    ).rejects.toThrow("INVALID_REF");
+    await expect(
+      t.mutation(api.mutations.reset, { ...base, subjectRef: "" }),
+    ).rejects.toThrow("INVALID_REF");
+    await expect(
+      t.mutation(api.mutations.eraseSubject, {
+        scope: "global",
+        subjectRef: "",
+      }),
+    ).rejects.toThrow("INVALID_REF");
     await expect(
       t.mutation(api.mutations.recordActivity, {
         ...base,

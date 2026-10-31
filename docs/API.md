@@ -12,8 +12,10 @@ const xp = new Progression(components.progression, { defaultScope: "global" });
 opaque host strings (1..256 UTF-16 code units). Never trust these, `delta`, or
 `thresholds` from an end-user without host authorization. `thresholds` must be
 strictly increasing, finite, and in `0..Number.MAX_SAFE_INTEGER` (empty is
-valid). These rules apply to reads as well as writes, including missing-row
-queries.
+valid). Threshold rules apply to reads as well as writes, including missing-row
+queries. Mutations reject invalid refs with `INVALID_REF`; `get` returns `null`
+for them, because no row can exist and reactive queries may run with placeholder
+values.
 
 ## Result types
 
@@ -44,8 +46,8 @@ level-up.
 
 ### `get(ctx, subjectRef, key, scope?, thresholds?)`
 
-Returns the progress row or `null`. When `thresholds` is passed, `level` is
-recomputed from stored XP.
+Returns the progress row or `null` (also for an empty or over-long ref). When
+`thresholds` is passed, `level` is recomputed from stored XP.
 
 ### `reset(ctx, subjectRef, key, scope?)`
 

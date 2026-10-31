@@ -1,6 +1,6 @@
 import { ConvexError } from "convex/values";
 
-import { assertThresholds, MAX_REF_LENGTH } from "../shared";
+import { assertThresholds, MAX_REF_LENGTH } from "../shared.js";
 
 export function fail(code: string, message: string): never {
   throw new ConvexError({ code, message });
