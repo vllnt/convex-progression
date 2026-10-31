@@ -36,12 +36,11 @@ await xp.recordActivity(ctx, subjectRef, "solo", today, [], {
 
 ## Installation
 
-Public canary releases are available. This guide follows `canary`; the npm
-`latest` tag also currently points to a prerelease, not a stable release.
-
 ```bash
-pnpm add @vllnt/convex-progression@canary
+pnpm add @vllnt/convex-progression
 ```
+
+Pre-release builds from `main` are published to the `canary` dist-tag.
 
 Peer dependency: `convex@^1.45.0`; Node.js ≥20 (development toolchain: Node
 20.19+ or 22.12+).
@@ -93,6 +92,9 @@ empty arrays are valid. XP deltas are positive finite numbers (fractions
 allowed) and totals cannot exceed MAX_SAFE_INTEGER. Erase batches default to 200
 and clamp to 500.
 
+`get` returns `null` for an empty or over-long ref, since no row can exist for
+it. Mutations reject such refs with `INVALID_REF`.
+
 Awards are not event-idempotent: deduplicate logical retries in the host. Period
 labels are not ordered; reject stale activity before calling the component.
 There is no leaderboard or automatic calendar tracking; compose an official
@@ -140,6 +142,24 @@ pnpm test:coverage
 Tests use the `convex-test` in-memory simulation (`@edge-runtime/vm`), not a
 real Convex backend. They do not prove production OCC retries or scheduler
 behavior.
+
+### Testing your app
+
+`@vllnt/convex-progression/test` exports `register(t, name = "progression")` to
+mount the component in a `convex-test` instance. It needs `convex-test` and
+`vitest` (with Vite's `import.meta.glob`) in the consuming app:
+
+```ts
+/// <reference types="vite/client" />
+import { convexTest } from "convex-test";
+import { register } from "@vllnt/convex-progression/test";
+import schema from "./schema";
+
+const t = convexTest(schema, import.meta.glob("./**/*.ts"));
+register(t);
+```
+
+### Package checks
 
 `node scripts/check-pack.mjs` checks tarball imports and NodeNext consumer
 types. For a separate **local backend** concurrency/scheduler smoke test,
