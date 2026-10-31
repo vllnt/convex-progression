@@ -15,15 +15,12 @@ Object.entries(manifest.scripts).forEach(([name, command]) => {
 });
 const workflow = readFileSync(".github/workflows/publish.yml", "utf8");
 const stable = workflow.slice(workflow.indexOf("  release:"));
-assert.ok(stable.includes("github.ref == 'refs/heads/main'"));
-assert.ok(stable.includes("vars.RELEASE_ENABLED == 'true'"));
+assert.ok(stable.includes("startsWith(github.ref, 'refs/tags/v')"));
+assert.ok(stable.includes("git merge-base --is-ancestor"));
+assert.ok(stable.includes("--provenance"));
 assert.ok(workflow.includes("cancel-in-progress: false"));
-assert.ok(!/inputs\.bump|npm version|git (?:push|commit|tag)/.test(stable));
-assert.ok(stable.includes('--notes "$RELEASE_NOTES"'));
-assert.ok(
-  stable.indexOf("- name: Publish to npm") <
-    stable.indexOf("- name: Create GitHub Release"),
-);
+assert.ok(!/inputs\.bump|npm version|git (?:push|commit)/.test(stable));
+assert.ok(!workflow.includes("NODE_AUTH_TOKEN: ${{"));
 ["CONTRIBUTING.md", "docs/RELEASING.md"].forEach((path) => {
   const text = readFileSync(path, "utf8");
   assert.ok(
@@ -31,4 +28,4 @@ assert.ok(
     `Stale release instructions: ${path}`,
   );
 });
-console.info("PASS: current-only release contract");
+console.info("PASS: tag-driven release contract");
