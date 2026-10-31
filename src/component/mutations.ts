@@ -1,11 +1,11 @@
 import { v } from "convex/values";
 
-import { DEFAULT_ERASE_BATCH, levelForXp, MAX_ERASE_BATCH } from "../shared";
+import { DEFAULT_ERASE_BATCH, levelForXp, MAX_ERASE_BATCH } from "../shared.js";
 
-import { api } from "./_generated/api";
-import { mutation } from "./_generated/server";
-import { fail, parseThresholds, requireRef } from "./validation";
-import { accrueResult, activityResult } from "./validators";
+import { api } from "./_generated/api.js";
+import { mutation } from "./_generated/server.js";
+import { fail, parseThresholds, requireRef } from "./validation.js";
+import { accrueResult, activityResult } from "./validators.js";
 
 export const accrue = mutation({
   args: {

@@ -3,7 +3,7 @@ import { v } from "convex/values";
 import { convexTest } from "convex-test";
 import { expect, test } from "vitest";
 
-import { register } from "./test";
+import { register } from "./test.js";
 
 test("register accepts a different host schema and custom component name", async () => {
   const host = defineSchema({ unrelated: defineTable({ title: v.string() }) });
