@@ -9,28 +9,40 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [0.1.0] - Unreleased
 
 First stable release. Earlier builds were published only to the `canary`
-dist-tag (`0.1.0-canary.0` on 2026-09-12 and rolling `0.1.0-canary.<sha>`
-builds).
+dist-tag.
 
 ### Added
 
-- `accrue`, `recordActivity`, `get` (optional threshold recompute), `reset`,
-  `eraseSubject` (batched).
-- `@vllnt/convex-progression/test` helper (`register`) for `convex-test`.
+- XP, levels and streaks per opaque `(scope, subjectRef, key)`:
+  - `accrue` adds XP and reports `leveledUp` / `previousLevel`. `level` is the
+    number of host-supplied `thresholds` the XP has reached.
+  - `recordActivity` records a host `periodKey`. A matching `expectedPrevious`
+    continues the streak, the same period leaves it unchanged, anything else
+    restarts it at 1. It tracks `maxStreak`.
+  - `get` returns the state or `null`, and recomputes `level` when `thresholds`
+    are passed.
+  - `reset` deletes one row; `eraseSubject` deletes a subject in bounded batches
+    (default 200, clamped to 500) and reschedules until clean.
+- Host-wrapper design: the component stores one sandboxed `progress` table and
+  never reads host tables or environment. The host owns auth, refs, thresholds
+  and period keys.
+- Multiple named mounts with isolated tables and scheduled work.
+- `@vllnt/convex-progression/test` exports `register` for `convex-test`.
 
-### Fixed
+### Guarantees and limits
 
-- Bound XP/streak arithmetic and reject silently lost awards (`INVALID_DELTA`,
-  `XP_OVERFLOW`, `STREAK_OVERFLOW`).
-- Validate query thresholds and all namespace/period refs.
-- `get` returns `null` for an empty or over-long ref instead of throwing, so
-  reactive queries with placeholder values do not error; mutations still reject
-  them with `INVALID_REF`.
-- The `/test` entry and component sources use `.js` relative imports and
-  reference Vite client types, so they type-check for `nodenext` consumers.
+- Fail closed: invalid input throws a `ConvexError` with a code (`INVALID_REF`,
+  `INVALID_THRESHOLDS`, `INVALID_DELTA`, `INVALID_BATCH`, `XP_OVERFLOW`,
+  `STREAK_OVERFLOW`). XP and streaks stay within `MAX_SAFE_INTEGER`, and an
+  award that would be silently lost to floating-point precision is rejected.
+- `get` returns `null` for an empty or over-long ref so reactive queries with
+  placeholder values do not error; mutations reject them with `INVALID_REF`.
+- Awards are not event-idempotent, periods are opaque and unordered, and erasure
+  has no write fence or completion token: the host deduplicates, orders and
+  fences. See [docs/API.md](docs/API.md#lifecycle-and-retries).
+- Tests use the `convex-test` simulation, not a real Convex backend.
 
-### Changed
+### Release process
 
-- Documented replay, erasure, simulation-test, and lifecycle limitations.
-- Releases are published only from a `vX.Y.Z` tag on `main` through npm trusted
-  publishing with provenance.
+- Stable releases are published only from a `vX.Y.Z` tag on `main` through npm
+  trusted publishing with provenance. Test files are not shipped.

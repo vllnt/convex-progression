@@ -58,29 +58,52 @@ export default app;
 ```
 
 ```ts
-import { components } from "./_generated/api";
-import { mutation } from "./_generated/server";
+// convex/progress.ts — host wrapper: authenticate first, then call the component.
+import { ConvexError, v } from "convex/values";
 import { Progression } from "@vllnt/convex-progression";
+import { components } from "./_generated/api";
+import { mutation, query } from "./_generated/server";
 
 const xp = new Progression(components.progression);
-const THRESHOLDS = [50, 150, 400];
+const THRESHOLDS = [50, 150, 400]; // host-owned ladder, never from the client
 
 export const onWin = mutation({
+  args: { periodKey: v.string(), previousPeriodKey: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (identity === null) {
+      throw new ConvexError("Not authenticated");
+    }
+    const subjectRef = identity.subject;
+    await xp.accrue(ctx, subjectRef, "solo", 10, THRESHOLDS);
+    return await xp.recordActivity(
+      ctx,
+      subjectRef,
+      "solo",
+      args.periodKey,
+      THRESHOLDS,
+      { expectedPrevious: args.previousPeriodKey },
+    );
+  },
+});
+
+export const myProgress = query({
   args: {},
   handler: async (ctx) => {
-    const subjectRef = /* host-resolved identity */ "user_1";
-    await xp.accrue(ctx, subjectRef, "solo", 10, THRESHOLDS);
-    await xp.recordActivity(ctx, subjectRef, "solo", "2026-09-11", THRESHOLDS, {
-      expectedPrevious: "2026-09-10",
-    });
+    const identity = await ctx.auth.getUserIdentity();
+    if (identity === null) {
+      return null;
+    }
+    return await xp.get(ctx, identity.subject, "solo", undefined, THRESHOLDS);
   },
 });
 ```
 
 After mounting, run `pnpm convex dev` to generate component references. **Host
 rules:** authenticate and authorize the subject; never take `delta` or
-`thresholds` from the end-user. The hardcoded identity and dates are
-illustrative, not a production identity or calendar policy.
+`thresholds` from the end-user. `periodKey` values are opaque and unordered: the
+host derives them (for example a UTC date) and rejects stale ones rather than
+trusting a client-supplied period.
 
 ## Configuration and limits
 
@@ -141,7 +164,8 @@ pnpm test:coverage
 
 Tests use the `convex-test` in-memory simulation (`@edge-runtime/vm`), not a
 real Convex backend. They do not prove production OCC retries or scheduler
-behavior.
+behavior. Maintainer package checks are described in
+[CONTRIBUTING.md](CONTRIBUTING.md#package-checks).
 
 ### Testing your app
 
@@ -158,22 +182,6 @@ import schema from "./schema";
 const t = convexTest(schema, import.meta.glob("./**/*.ts"));
 register(t);
 ```
-
-### Package checks
-
-`node scripts/check-pack.mjs` checks tarball imports and NodeNext consumer
-types. For a separate **local backend** concurrency/scheduler smoke test,
-provision an anonymous deployment in an isolated HOME (never a cloud/production
-deployment):
-
-```bash
-HOME=/tmp/progression-audit-home CONVEX_AGENT_MODE=anonymous pnpm convex dev --once --local-cloud-port 3320 --local-site-port 3321 --typecheck disable
-HOME=/tmp/progression-audit-home CONVEX_AGENT_MODE=anonymous node scripts/check-local.mjs
-```
-
-The probe starts/stops its own CLI and backend. This is bounded smoke evidence,
-not proof of every conflict schedule or production workload. Example wrappers
-accept raw refs and awards for testing only; they are not production auth gates.
 
 ## Contributing
 
