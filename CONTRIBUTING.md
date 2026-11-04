@@ -30,6 +30,22 @@ Coverage is gated at 100% (`vitest.config.mts`). Every public method needs a
 happy-path test **and** at least one adversarial test (auth-denied, invalid
 input, boundary).
 
+### Package checks
+
+`node scripts/check-pack.mjs` checks tarball imports and NodeNext consumer
+types. For a separate **local backend** concurrency/scheduler smoke test,
+provision an anonymous deployment in an isolated HOME (never a cloud/production
+deployment):
+
+```bash
+HOME=/tmp/progression-audit-home CONVEX_AGENT_MODE=anonymous pnpm convex dev --once --local-cloud-port 3320 --local-site-port 3321 --typecheck disable
+HOME=/tmp/progression-audit-home CONVEX_AGENT_MODE=anonymous node scripts/check-local.mjs
+```
+
+The probe starts/stops its own CLI and backend. This is bounded smoke evidence,
+not proof of every conflict schedule or production workload. Example wrappers
+accept raw refs and awards for testing only; they are not production auth gates.
+
 ## Code Style
 
 - Prettier + ESLint (run `pnpm lint` before submitting)

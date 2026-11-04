@@ -18,8 +18,9 @@ The only client option is `defaultScope` (default `"global"`). Result state is
 `{ xp, level, streak, maxStreak, updatedAt, lastPeriodKey? }`; accrue adds
 `{ leveledUp, previousLevel }`, activity adds `{ streakDelta }`, and get returns
 state or null. Erase batches default to 200 and clamp to 500. Multiple named
-mounts isolate state and scheduled work. There is no React entry or built-in
-leaderboard/calendar policy.
+mounts isolate state and scheduled work. `@vllnt/convex-progression/test` exports
+`register(t, name = "progression")` to mount the component in `convex-test`.
+There is no React entry or built-in leaderboard/calendar policy.
 
 ## Docs
 
