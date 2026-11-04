@@ -58,34 +58,73 @@ export default app;
 ```
 
 ```ts
-// convex/progress.ts — host wrapper: authenticate first, then call the component.
-import { ConvexError, v } from "convex/values";
+// convex/progression.ts — shared host setup.
 import { Progression } from "@vllnt/convex-progression";
-import { components } from "./_generated/api";
-import { mutation, query } from "./_generated/server";
+import { v } from "convex/values";
 
-const xp = new Progression(components.progression);
-const THRESHOLDS = [50, 150, 400]; // host-owned ladder, never from the client
+import { components } from "./_generated/api";
+
+export const xp = new Progression(components.progression);
+export const THRESHOLDS = [50, 150, 400]; // host-owned ladder, never from the client
+export const progressFields = {
+  lastPeriodKey: v.optional(v.string()),
+  level: v.number(),
+  maxStreak: v.number(),
+  streak: v.number(),
+  updatedAt: v.number(),
+  xp: v.number(),
+};
+```
+
+```ts
+// convex/mutations.ts — authenticate, verify the win, then call the component.
+// The client sends an id; the server picks the XP and the periods.
+import { ConvexError, v } from "convex/values";
+
+import { mutation } from "./_generated/server";
+import { progressFields, THRESHOLDS, xp } from "./progression";
+
+const WIN_XP = 10; // host-owned award
+const DAY_MS = 86_400_000;
+const dayKey = (ms: number) => new Date(ms).toISOString().slice(0, 10);
 
 export const onWin = mutation({
-  args: { periodKey: v.string(), previousPeriodKey: v.optional(v.string()) },
-  handler: async (ctx, args) => {
+  args: { matchId: v.id("matches") },
+  handler: async (ctx, { matchId }) => {
     const identity = await ctx.auth.getUserIdentity();
     if (identity === null) {
       throw new ConvexError("Not authenticated");
     }
     const subjectRef = identity.subject;
-    await xp.accrue(ctx, subjectRef, "solo", 10, THRESHOLDS);
+    // Host state decides whether a win happened, and at most once: a host
+    // `matches` table with `winner` and `awarded` fields.
+    const match = await ctx.db.get("matches", matchId);
+    if (match?.winner !== subjectRef || match.awarded) {
+      throw new ConvexError("No unawarded win for this match");
+    }
+    await ctx.db.patch("matches", match._id, { awarded: true });
+    await xp.accrue(ctx, subjectRef, "solo", WIN_XP, THRESHOLDS);
+    // Periods come from the server clock, never from the client.
+    const now = Date.now();
     return await xp.recordActivity(
       ctx,
       subjectRef,
       "solo",
-      args.periodKey,
+      dayKey(now),
       THRESHOLDS,
-      { expectedPrevious: args.previousPeriodKey },
+      { expectedPrevious: dayKey(now - DAY_MS) },
     );
   },
+  returns: v.object({ ...progressFields, streakDelta: v.number() }),
 });
+```
+
+```ts
+// convex/queries.ts
+import { v } from "convex/values";
+
+import { query } from "./_generated/server";
+import { progressFields, THRESHOLDS, xp } from "./progression";
 
 export const myProgress = query({
   args: {},
@@ -96,14 +135,16 @@ export const myProgress = query({
     }
     return await xp.get(ctx, identity.subject, "solo", undefined, THRESHOLDS);
   },
+  returns: v.union(v.null(), v.object(progressFields)),
 });
 ```
 
 After mounting, run `pnpm convex dev` to generate component references. **Host
 rules:** authenticate and authorize the subject; never take `delta` or
 `thresholds` from the end-user. `periodKey` values are opaque and unordered: the
-host derives them (for example a UTC date) and rejects stale ones rather than
-trusting a client-supplied period.
+host derives them (for example a UTC date from the server clock) and never
+accepts a client-supplied period or predecessor. Deduplicate awards in the host,
+atomically with the call, as `onWin` does with `matches.awarded`.
 
 ## Configuration and limits
 
