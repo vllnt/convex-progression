@@ -1,4 +1,3 @@
-/* eslint-disable functional/no-loop-statements -- The smoke probe sequences writes and bounded polling. */
 // Runs an anonymous loopback deployment; use an isolated HOME.
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
@@ -62,7 +61,6 @@ try {
   const base = { key: "xp", subjectRef: `probe-${String(Date.now())}` };
   await client.mutation(api.example.accrueSecondary, base);
   // Convex serializes missing rows as null.
-  // eslint-disable-next-line unicorn/no-null
   assert.equal(await client.query(api.example.get, base), null);
   await Promise.all(
     Array.from({ length: 12 }, () =>

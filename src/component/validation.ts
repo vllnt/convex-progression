@@ -1,6 +1,11 @@
 import { ConvexError } from "convex/values";
 
-import { assertThresholds, MAX_REF_LENGTH } from "../shared.js";
+import {
+  assertThresholds,
+  clampEraseBatch,
+  DEFAULT_ERASE_BATCH,
+  MAX_REF_LENGTH,
+} from "../shared.js";
 
 export function fail(code: string, message: string): never {
   throw new ConvexError({ code, message });
@@ -15,16 +20,29 @@ export function requireRef(value: string, name: string): void {
   }
 }
 
+/** Re-throw a shared `CODE: message` error as a coded ConvexError. */
+function failFromShared(code: string, error: unknown): never {
+  return fail(
+    code,
+    String(error)
+      .replace(/^Error:\s*/, "")
+      .replace(`${code}: `, ""),
+  );
+}
+
 export function parseThresholds(thresholds: number[]): number[] {
   try {
     assertThresholds(thresholds);
   } catch (error) {
-    fail(
-      "INVALID_THRESHOLDS",
-      String(error)
-        .replace(/^Error:\s*/, "")
-        .replace(/^INVALID_THRESHOLDS:\s*/, ""),
-    );
+    failFromShared("INVALID_THRESHOLDS", error);
   }
   return thresholds;
+}
+
+export function parseBatch(batch: number | undefined): number {
+  try {
+    return clampEraseBatch(batch ?? DEFAULT_ERASE_BATCH);
+  } catch (error) {
+    return failFromShared("INVALID_BATCH", error);
+  }
 }

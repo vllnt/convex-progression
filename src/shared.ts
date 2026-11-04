@@ -1,7 +1,5 @@
 /** Shared constants used by both `client/` and `component/`. */
 
-export const COMPONENT_NAME = "progression";
-
 /** Default namespace when the host does not scope progress. */
 export const DEFAULT_SCOPE = "global";
 
