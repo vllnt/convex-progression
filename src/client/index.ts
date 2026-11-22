@@ -96,8 +96,6 @@ export class Progression {
     return scope ?? this.defaultScope;
   }
 
-  // Public positional API retained for compatibility.
-  // eslint-disable-next-line max-params
   accrue(
     ctx: RunMutationCtx,
     subjectRef: string,
@@ -115,8 +113,6 @@ export class Progression {
     });
   }
 
-  // Public positional API retained for compatibility.
-  // eslint-disable-next-line max-params
   recordActivity(
     ctx: RunMutationCtx,
     subjectRef: string,
@@ -135,8 +131,6 @@ export class Progression {
     });
   }
 
-  // Public positional API retained for compatibility.
-  // eslint-disable-next-line max-params
   get(
     ctx: RunQueryCtx,
     subjectRef: string,
@@ -152,8 +146,6 @@ export class Progression {
     });
   }
 
-  // Public positional API retained for compatibility.
-  // eslint-disable-next-line max-params
   reset(
     ctx: RunMutationCtx,
     subjectRef: string,
@@ -167,8 +159,6 @@ export class Progression {
     });
   }
 
-  // Public positional API retained for compatibility.
-  // eslint-disable-next-line max-params
   eraseSubject(
     ctx: RunMutationCtx,
     subjectRef: string,

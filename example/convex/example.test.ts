@@ -261,10 +261,10 @@ describe("progression — validation and scope", () => {
     ).rejects.toThrow();
     await expect(
       t.mutation(api.example.eraseSubject, { batch: 0, subjectRef: "u1" }),
-    ).rejects.toThrow();
+    ).rejects.toThrow("INVALID_BATCH");
     await expect(
       t.mutation(api.example.eraseSubject, { batch: 1.5, subjectRef: "u1" }),
-    ).rejects.toThrow();
+    ).rejects.toThrow("INVALID_BATCH");
     expect(
       await t.mutation(api.example.eraseSubject, {
         batch: 10_000,

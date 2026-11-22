@@ -1,11 +1,98 @@
 import { v } from "convex/values";
 
-import { DEFAULT_ERASE_BATCH, levelForXp, MAX_ERASE_BATCH } from "../shared.js";
+import { levelForXp } from "../shared.js";
 
 import { api } from "./_generated/api.js";
+import type { Doc as ProgressDocument } from "./_generated/dataModel.js";
+import type { MutationCtx } from "./_generated/server.js";
 import { mutation } from "./_generated/server.js";
-import { fail, parseThresholds, requireRef } from "./validation.js";
+import { fail, parseBatch, parseThresholds, requireRef } from "./validation.js";
 import { accrueResult, activityResult } from "./validators.js";
+
+type Ref = { key: string; scope: string; subjectRef: string };
+type Progress = ProgressDocument<"progress">;
+type ProgressRow = Omit<
+  Progress,
+  "_creationTime" | "_id" | "key" | "scope" | "subjectRef"
+>;
+
+function requireReferences(ref: Ref): void {
+  requireRef(ref.subjectRef, "subjectRef");
+  requireRef(ref.key, "key");
+  requireRef(ref.scope, "scope");
+}
+
+function findProgress(ctx: MutationCtx, ref: Ref): Promise<null | Progress> {
+  return ctx.db
+    .query("progress")
+    .withIndex("by_scope_subject_key", (q) =>
+      q
+        .eq("scope", ref.scope)
+        .eq("subjectRef", ref.subjectRef)
+        .eq("key", ref.key),
+    )
+    .unique();
+}
+
+async function saveProgress(
+  ctx: MutationCtx,
+  write: { existing: null | Progress; ref: Ref; row: ProgressRow },
+): Promise<void> {
+  const { existing, ref, row } = write;
+  await (existing === null
+    ? ctx.db.insert("progress", {
+        key: ref.key,
+        scope: ref.scope,
+        subjectRef: ref.subjectRef,
+        ...row,
+      })
+    : ctx.db.patch("progress", existing._id, row));
+}
+
+function requireDelta(delta: number): void {
+  if (
+    !Number.isFinite(delta) ||
+    delta <= 0 ||
+    delta > Number.MAX_SAFE_INTEGER
+  ) {
+    fail(
+      "INVALID_DELTA",
+      "delta must be positive and at most MAX_SAFE_INTEGER",
+    );
+  }
+}
+
+function nextXp(previous: number, delta: number): number {
+  const xp = previous + delta;
+  if (!Number.isFinite(xp) || xp > Number.MAX_SAFE_INTEGER || xp <= previous) {
+    fail(
+      "XP_OVERFLOW",
+      "XP exceeds the safe bound or delta is lost to floating-point precision",
+    );
+  }
+  return xp;
+}
+
+function nextStreak(
+  existing: null | Progress,
+  periodKey: string,
+  expectedPrevious: string | undefined,
+): number {
+  if (existing === null) {
+    return 1;
+  }
+  const { lastPeriodKey, streak } = existing;
+  if (lastPeriodKey === periodKey) {
+    return streak;
+  }
+  if (lastPeriodKey !== undefined && lastPeriodKey === expectedPrevious) {
+    if (!Number.isSafeInteger(streak + 1)) {
+      fail("STREAK_OVERFLOW", "streak exceeds MAX_SAFE_INTEGER");
+    }
+    return streak + 1;
+  }
+  return 1;
+}
 
 export const accrue = mutation({
   args: {
@@ -15,62 +102,23 @@ export const accrue = mutation({
     subjectRef: v.string(),
     thresholds: v.array(v.number()),
   },
-  // Keep each atomic transaction readable as one handler.
-  // eslint-disable-next-line max-lines-per-function
   handler: async (ctx, arguments_) => {
-    requireRef(arguments_.subjectRef, "subjectRef");
-    requireRef(arguments_.key, "key");
-    requireRef(arguments_.scope, "scope");
-    if (
-      !Number.isFinite(arguments_.delta) ||
-      arguments_.delta <= 0 ||
-      arguments_.delta > Number.MAX_SAFE_INTEGER
-    ) {
-      fail(
-        "INVALID_DELTA",
-        "delta must be positive and at most MAX_SAFE_INTEGER",
-      );
-    }
+    requireReferences(arguments_);
+    requireDelta(arguments_.delta);
     const thresholds = parseThresholds(arguments_.thresholds);
-    const existing = await ctx.db
-      .query("progress")
-      .withIndex("by_scope_subject_key", (q) =>
-        q
-          .eq("scope", arguments_.scope)
-          .eq("subjectRef", arguments_.subjectRef)
-          .eq("key", arguments_.key),
-      )
-      .unique();
-    const now = Date.now();
+    const existing = await findProgress(ctx, arguments_);
     const previousLevel = existing?.level ?? 0;
-    const xp = (existing?.xp ?? 0) + arguments_.delta;
-    if (
-      !Number.isFinite(xp) ||
-      xp > Number.MAX_SAFE_INTEGER ||
-      xp <= (existing?.xp ?? 0)
-    ) {
-      fail(
-        "XP_OVERFLOW",
-        "XP exceeds the safe bound or delta is lost to floating-point precision",
-      );
-    }
+    const xp = nextXp(existing?.xp ?? 0, arguments_.delta);
     const level = levelForXp(xp, thresholds);
     const row = {
       lastPeriodKey: existing?.lastPeriodKey,
       level,
       maxStreak: existing?.maxStreak ?? 0,
       streak: existing?.streak ?? 0,
-      updatedAt: now,
+      updatedAt: Date.now(),
       xp,
     };
-    await (existing === null
-      ? ctx.db.insert("progress", {
-          key: arguments_.key,
-          scope: arguments_.scope,
-          subjectRef: arguments_.subjectRef,
-          ...row,
-        })
-      : ctx.db.patch("progress", existing._id, row));
+    await saveProgress(ctx, { existing, ref: arguments_, row });
     return { ...row, leveledUp: level > previousLevel, previousLevel };
   },
   returns: accrueResult,
@@ -85,58 +133,33 @@ export const recordActivity = mutation({
     subjectRef: v.string(),
     thresholds: v.array(v.number()),
   },
-  // Keep each atomic transaction readable as one handler.
-  // eslint-disable-next-line max-lines-per-function
   handler: async (ctx, arguments_) => {
-    requireRef(arguments_.subjectRef, "subjectRef");
-    requireRef(arguments_.key, "key");
-    requireRef(arguments_.scope, "scope");
+    requireReferences(arguments_);
     requireRef(arguments_.periodKey, "periodKey");
     if (arguments_.expectedPrevious !== undefined) {
       requireRef(arguments_.expectedPrevious, "expectedPrevious");
     }
     const thresholds = parseThresholds(arguments_.thresholds);
-    const existing = await ctx.db
-      .query("progress")
-      .withIndex("by_scope_subject_key", (q) =>
-        q
-          .eq("scope", arguments_.scope)
-          .eq("subjectRef", arguments_.subjectRef)
-          .eq("key", arguments_.key),
-      )
-      .unique();
-    const now = Date.now();
+    const existing = await findProgress(ctx, arguments_);
     const xp = existing?.xp ?? 0;
-    const lastPeriodKey = existing?.lastPeriodKey;
-    const samePeriod = lastPeriodKey === arguments_.periodKey;
-    const consecutive =
-      lastPeriodKey !== undefined &&
-      lastPeriodKey === arguments_.expectedPrevious;
-    const continuedStreak =
-      consecutive && existing !== null ? existing.streak + 1 : 1;
-    const streak =
-      samePeriod && existing !== null ? existing.streak : continuedStreak;
-    if (!Number.isSafeInteger(streak)) {
-      fail("STREAK_OVERFLOW", "streak exceeds MAX_SAFE_INTEGER");
-    }
-    const streakDelta = samePeriod ? 0 : 1;
+    const streak = nextStreak(
+      existing,
+      arguments_.periodKey,
+      arguments_.expectedPrevious,
+    );
     const row = {
       lastPeriodKey: arguments_.periodKey,
       level: levelForXp(xp, thresholds),
       maxStreak: Math.max(existing?.maxStreak ?? 0, streak),
       streak,
-      updatedAt: now,
+      updatedAt: Date.now(),
       xp,
     };
-    await (existing === null
-      ? ctx.db.insert("progress", {
-          key: arguments_.key,
-          scope: arguments_.scope,
-          subjectRef: arguments_.subjectRef,
-          ...row,
-        })
-      : ctx.db.patch("progress", existing._id, row));
-    return { ...row, streakDelta };
+    await saveProgress(ctx, { existing, ref: arguments_, row });
+    return {
+      ...row,
+      streakDelta: existing?.lastPeriodKey === arguments_.periodKey ? 0 : 1,
+    };
   },
   returns: activityResult,
 });
@@ -148,18 +171,8 @@ export const reset = mutation({
     subjectRef: v.string(),
   },
   handler: async (ctx, arguments_) => {
-    requireRef(arguments_.subjectRef, "subjectRef");
-    requireRef(arguments_.key, "key");
-    requireRef(arguments_.scope, "scope");
-    const existing = await ctx.db
-      .query("progress")
-      .withIndex("by_scope_subject_key", (q) =>
-        q
-          .eq("scope", arguments_.scope)
-          .eq("subjectRef", arguments_.subjectRef)
-          .eq("key", arguments_.key),
-      )
-      .unique();
+    requireReferences(arguments_);
+    const existing = await findProgress(ctx, arguments_);
     if (existing !== null) {
       await ctx.db.delete("progress", existing._id);
     }
@@ -177,14 +190,7 @@ export const eraseSubject = mutation({
   handler: async (ctx, arguments_) => {
     requireRef(arguments_.subjectRef, "subjectRef");
     requireRef(arguments_.scope, "scope");
-    const raw = arguments_.batch ?? DEFAULT_ERASE_BATCH;
-    if (!Number.isInteger(raw)) {
-      fail("INVALID_BATCH", "batch must be a positive integer");
-    }
-    if (raw < 1) {
-      fail("INVALID_BATCH", "batch must be a positive integer");
-    }
-    const batch = Math.min(raw, MAX_ERASE_BATCH);
+    const batch = parseBatch(arguments_.batch);
     const rows = await ctx.db
       .query("progress")
       .withIndex("by_scope_subject_key", (q) =>

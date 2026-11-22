@@ -40,10 +40,10 @@ await xp.recordActivity(ctx, subjectRef, "solo", today, [], {
 pnpm add @vllnt/convex-progression
 ```
 
-Pre-release builds from `main` are published to the `canary` dist-tag.
-
-Peer dependency: `convex@^1.45.0`; Node.js ≥20 (development toolchain: Node
-20.19+ or 22.12+).
+Node.js >=20; required peer: `convex@^1.45.0`. Stable releases are
+published to the `latest` dist-tag with npm provenance. Builds from `main` go
+to the `canary` dist-tag (`pnpm add @vllnt/convex-progression@canary`). The
+development toolchain needs Node 20.19+ or 22.12+.
 
 ## Usage
 
@@ -98,11 +98,11 @@ export const onWin = mutation({
     const subjectRef = identity.subject;
     // Host state decides whether a win happened, and at most once: a host
     // `matches` table with `winner` and `awarded` fields.
-    const match = await ctx.db.get("matches", matchId);
+    const match = await ctx.db.get(matchId);
     if (match?.winner !== subjectRef || match.awarded) {
       throw new ConvexError("No unawarded win for this match");
     }
-    await ctx.db.patch("matches", match._id, { awarded: true });
+    await ctx.db.patch(match._id, { awarded: true });
     await xp.accrue(ctx, subjectRef, "solo", WIN_XP, THRESHOLDS);
     // Periods come from the server clock, never from the client.
     const now = Date.now();
