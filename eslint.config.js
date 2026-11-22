@@ -21,6 +21,13 @@ export default [
     },
   },
   ...convex,
+  // The positional client API matches the other vllnt component clients (e.g. convex-wallet).
+  { files: ["src/client/index.ts"], rules: { "max-params": "off" } },
+  // The probe sequences writes, polls with a deadline, and Convex serializes missing rows as null.
+  {
+    files: ["scripts/check-local.mjs"],
+    rules: { "functional/no-loop-statements": "off", "unicorn/no-null": "off" },
+  },
   {
     languageOptions: {
       parserOptions: { project: "./tsconfig.lint.json", projectService: false },
