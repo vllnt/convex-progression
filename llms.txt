@@ -6,7 +6,7 @@
 It stores one sandboxed table — `progress` (one row per `(scope, subjectRef, key)`: `xp`, `level`,
 `streak`, `maxStreak`, `lastPeriodKey`). `accrue` adds XP; `level` is the count of host-supplied
 `thresholds` that XP has reached. `recordActivity` takes a host `periodKey` and optional
-`expectedPrevious` (same period leaves the streak unchanged but refreshes level/timestamp; match continues the streak; a gap resets to 1).
+`expectedPrevious` (same period leaves the streak unchanged and writes, refreshing level/timestamp, only when the level changes; match continues the streak; a gap resets to 1).
 `get` can recompute `level` when the host passes `thresholds`. `eraseSubject` deletes in bounded
 batches without a write fence or completion token. XP is bounded by MAX_SAFE_INTEGER;
 reads validate thresholds too. Award requests are not event-idempotent; hosts must deduplicate
