@@ -39,8 +39,9 @@ level-up.
 
 `opts`: `{ scope?, expectedPrevious? }`.
 
-- Same `periodKey` as stored → streak unchanged (`streakDelta: 0`), but level is
-  recomputed and `updatedAt` is refreshed.
+- Same `periodKey` as stored → streak unchanged (`streakDelta: 0`) and level is
+  recomputed; the row is written (refreshing `updatedAt`) only when the level
+  changed, so repeat calls in one period are read-only.
 - `lastPeriodKey === expectedPrevious` → streak + 1.
 - Otherwise → streak resets to 1.
 

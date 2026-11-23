@@ -6,6 +6,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- `recordActivity` with the stored `periodKey` and an unchanged level no longer
+  writes the row: it returns the stored state (`streakDelta: 0`, previous
+  `updatedAt`), so repeat activity in the same period costs no write and does
+  not re-run `get` subscriptions.
+
 ## [0.1.0] - 2026-11-23
 
 First stable release. Earlier builds were published only to the `canary`
