@@ -12,9 +12,9 @@ assert.ok(index.includes("(https://oss.vllnt.com/llms.txt)"));
 // llms.txt ships in the npm package: links to shipped files are relative so they
 // match the installed version; anything else is an absolute https URL.
 // scripts/check-pack.mjs proves each ./ link resolves inside the packed tarball.
-for (const [, target = ""] of index.matchAll(/]\(([^)]+)\)/g)) {
+[...index.matchAll(/]\(([^)]+)\)/g)].forEach(([, target = ""]) => {
   assert.ok(
     target.startsWith("./") || target.startsWith("https://"),
     `llms.txt link must be ./ or https: ${target}`,
   );
-}
+});
