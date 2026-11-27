@@ -8,11 +8,12 @@
   "files": [
     "dist",
     "src",
-    "!src/**/*.test.ts",
     "docs/API.md",
     "CHANGELOG.md",
     "llms.txt",
-    "!src/**/*.spec.*"],
+    "!src/**/*.test.ts",
+    "!src/**/*.spec.*"
+  ],
   "exports": {
     "./package.json": "./package.json",
     ".": {
@@ -71,7 +72,7 @@
     "vite": "^8.3.8",
     "vitest": "^5.1.0"
   },
-  "homepage": "https://github.com/vllnt/convex-progression#readme",
+  "homepage": "https://oss.vllnt.com/packages/convex-progression",
   "bugs": {
     "url": "https://github.com/vllnt/convex-progression/issues"
   },
@@ -99,7 +100,9 @@
     "convex-component",
     "progression",
     "xp",
-    "streak"
+    "level",
+    "streak",
+    "gamification"
   ],
   "pnpm": {
     "ignoredBuiltDependencies": [

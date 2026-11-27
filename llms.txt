@@ -22,12 +22,20 @@ mounts isolate state and scheduled work. `@vllnt/convex-progression/test` export
 `register(t, name = "progression")` to mount the component in `convex-test`.
 There is no React entry or built-in leaderboard/calendar policy.
 
+## For coding agents
+
+These docs ship in the npm package: the full API reference at
+`node_modules/@vllnt/convex-progression/docs/API.md`, and `README.md`,
+`CHANGELOG.md`, this `llms.txt` and the TypeScript source in `src/` at the
+package root. They match the installed version. Read them before writing code
+against this package.
+
 ## Docs
 
-- [README](https://github.com/vllnt/convex-progression/blob/main/README.md): Project overview, installation, usage examples, architecture
-- [API Reference](https://github.com/vllnt/convex-progression/blob/main/docs/API.md): Public class methods, return shapes, input validation
-- [Changelog](https://github.com/vllnt/convex-progression/blob/main/CHANGELOG.md): Version history and release notes
-- [Contributing](https://github.com/vllnt/convex-progression/blob/main/CONTRIBUTING.md): Development setup, validation commands, release workflow
+- [README](./README.md): Project overview, installation, usage examples, security, testing
+- [API Reference](./docs/API.md): Public class methods, return shapes, input validation
+- [Changelog](./CHANGELOG.md): Version history and release notes
+- [Contributing](https://github.com/vllnt/convex-progression/blob/main/CONTRIBUTING.md): Development setup, validation commands, release workflow (not in the npm package)
 
 ## Examples
 
@@ -39,4 +47,8 @@ There is no React entry or built-in leaderboard/calendar policy.
 - [AGENTS](https://github.com/vllnt/convex-progression/blob/main/AGENTS.md): Canonical agent instructions for this repository
 - [Security Policy](https://github.com/vllnt/convex-progression/blob/main/SECURITY.md): Vulnerability reporting policy
 - [Code of Conduct](https://github.com/vllnt/convex-progression/blob/main/CODE_OF_CONDUCT.md): Community participation guidelines
-- [License](https://github.com/vllnt/convex-progression/blob/main/LICENSE): MIT license
+- [License](./LICENSE): MIT license
+
+## Ecosystem
+
+- [vllnt oss](https://oss.vllnt.com/llms.txt): Index of every @vllnt package
