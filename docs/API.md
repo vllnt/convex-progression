@@ -17,6 +17,18 @@ queries. Mutations reject invalid refs with `INVALID_REF`; `get` returns `null`
 for them, because no row can exist and reactive queries may run with placeholder
 values.
 
+## Entry points
+
+| Import                                           | Exports                                                                                                                    |
+| ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
+| `@vllnt/convex-progression`                      | `Progression` class; types `ProgressionComponent`, `ProgressionOptions`, `ProgressState`, `AccrueResult`, `ActivityResult` |
+| `@vllnt/convex-progression/convex.config`        | the component definition (default export) for `app.use(...)`                                                               |
+| `@vllnt/convex-progression/_generated/component` | type `ComponentApi` (types only)                                                                                           |
+| `@vllnt/convex-progression/test`                 | `register(t, name = "progression")` to mount the component in `convex-test`                                                |
+
+`ProgressionOptions` is `{ defaultScope?: string }` (default `"global"`); it is
+the only client option.
+
 ## Result types
 
 `ProgressState` is
@@ -43,6 +55,10 @@ level-up.
   recomputed and `updatedAt` is refreshed.
 - `lastPeriodKey === expectedPrevious` → streak + 1.
 - Otherwise → streak resets to 1.
+
+`streakDelta` is `0` for the same period and `1` for any new period, including
+one that restarts the streak at 1. It is not the net change in `streak`.
+`maxStreak` keeps the highest streak reached.
 
 ### `get(ctx, subjectRef, key, scope?, thresholds?)`
 

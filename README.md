@@ -45,6 +45,13 @@ published to the `latest` dist-tag with npm provenance. Builds from `main` go
 to the `canary` dist-tag (`pnpm add @vllnt/convex-progression@canary`). The
 development toolchain needs Node 20.19+ or 22.12+.
 
+### For coding agents
+
+The docs ship in the npm package at
+`node_modules/@vllnt/convex-progression/docs/` (with `README.md`,
+`CHANGELOG.md`, `llms.txt` and the TypeScript source in `src/`). They match the
+installed version. Read them before writing code against this package.
+
 ## Usage
 
 ```ts
@@ -224,6 +231,23 @@ const t = convexTest(schema, import.meta.glob("./**/*.ts"));
 register(t);
 ```
 
+## Related packages
+
+- [`@vllnt/convex-wallet`](https://oss.vllnt.com/packages/convex-wallet) —
+  spendable balances (coins, credits). Use it when the value is spent; use
+  progression when it only accumulates into a level.
+- [`@vllnt/convex-quota`](https://oss.vllnt.com/packages/convex-quota) —
+  allowances that reset on a schedule. Use it for caps, not for XP or streaks.
+- [`@vllnt/convex-idempotency`](https://oss.vllnt.com/packages/convex-idempotency)
+  — exactly-once keys. Use it in the host mutation to deduplicate awards, since
+  `accrue` is not event-idempotent.
+- [`@vllnt/convex-events`](https://oss.vllnt.com/packages/convex-events) —
+  append-only per-subject activity feed. Use it to keep a history of awards;
+  progression stores only the current totals.
+- [`@convex-dev/aggregate`](https://www.npmjs.com/package/@convex-dev/aggregate)
+  — sorted counts and ranks. Use it for leaderboards, which progression does not
+  provide.
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md).
@@ -233,8 +257,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 Built by [bntvllnt](https://github.com/bntvllnt) ·
 [bntvllnt.com](https://bntvllnt.com) · [X @bntvllnt](https://x.com/bntvllnt)
 
-Part of the [@vllnt](https://github.com/vllnt) Convex component fleet —
-[vllnt.com](https://vllnt.com)
+Part of vllnt oss: https://oss.vllnt.com
 
 If this is useful, [sponsor the work](https://github.com/sponsors/bntvllnt).
 

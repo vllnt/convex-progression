@@ -1,8 +1,37 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+
+// Files agents and consumers read from node_modules; they must ship.
+const required = [
+  "CHANGELOG.md",
+  "LICENSE",
+  "README.md",
+  "docs/API.md",
+  "dist/client/index.d.ts",
+  "dist/client/index.js",
+  "dist/component/convex.config.js",
+  "llms.txt",
+  "package.json",
+  "src/test.ts",
+];
+// Contributor and maintainer files; they must not ship.
+const forbidden = [
+  "AGENTS.md",
+  "CONTRIBUTING.md",
+  "docs/RELEASING.md",
+  "example",
+  "scripts",
+];
 
 const directory = mkdtempSync(join(tmpdir(), "progression-pack-"));
 /** @param {string} command @param {string[]} arguments_ @param {string} [cwd] */
@@ -27,6 +56,27 @@ try {
     }),
   );
   run("pnpm", ["install", "--ignore-scripts"]);
+  const installed = join(directory, "node_modules/@vllnt/convex-progression");
+  const missing = required.filter((path) => !existsSync(join(installed, path)));
+  assert.deepEqual(
+    missing,
+    [],
+    `missing from the tarball: ${missing.join(", ")}`,
+  );
+  const extra = forbidden.filter((path) => existsSync(join(installed, path)));
+  assert.deepEqual(extra, [], `must not ship: ${extra.join(", ")}`);
+  const links = [
+    ...readFileSync(join(installed, "llms.txt"), "utf8").matchAll(
+      /]\((\.\/[^)#]+)/g,
+    ),
+  ].map((match) => match[1] ?? "");
+  assert.ok(links.length > 0, "llms.txt has no relative links");
+  const broken = links.filter((path) => !existsSync(join(installed, path)));
+  assert.deepEqual(
+    broken,
+    [],
+    `llms.txt links outside the tarball: ${broken.join(", ")}`,
+  );
   writeFileSync(
     join(directory, "check.ts"),
     `import { Progression } from "@vllnt/convex-progression";
@@ -64,7 +114,9 @@ void component;
     "-e",
     'import {Progression} from "@vllnt/convex-progression"; import c from "@vllnt/convex-progression/convex.config.js"; if(typeof Progression!=="function" || !c) throw Error("bad exports");',
   ]);
-  console.info("PASS: packed NodeNext types and runtime root/config exports");
+  console.info(
+    "PASS: packed files, llms.txt links, NodeNext types and runtime root/config exports",
+  );
 } finally {
   rmSync(directory, { force: true, recursive: true });
 }

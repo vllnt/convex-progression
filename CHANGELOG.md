@@ -6,6 +6,27 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- The npm package documents itself for coding agents: `README.md` and `llms.txt`
+  say the docs ship at `node_modules/@vllnt/convex-progression/docs/` and match
+  the installed version. `llms.txt` gains an Ecosystem link to
+  `https://oss.vllnt.com/llms.txt`; the README gains a Related packages section.
+- `docs/API.md` lists the package entry points and states what `streakDelta`
+  reports.
+- `scripts/check-pack.mjs` (run in CI) fails when a required file is missing
+  from the packed tarball, a contributor file ships, or an `llms.txt` link does
+  not resolve inside it.
+
+### Changed
+
+- `llms.txt` links to shipped files (`README.md`, `docs/API.md`, `CHANGELOG.md`,
+  `LICENSE`) are relative, so they point at the installed version instead of
+  GitHub `main`.
+- `homepage` is `https://oss.vllnt.com/packages/convex-progression`.
+- Every push to `main` that touches the package or its shipped docs publishes a
+  canary; a repository variable no longer gates it.
+
 ## [0.1.0] - 2026-11-23
 
 First stable release. Earlier builds were published only to the `canary`

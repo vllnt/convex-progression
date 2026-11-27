@@ -4,8 +4,8 @@ Every publish runs in `.github/workflows/publish.yml` with npm trusted
 publishing and provenance. The workflow holds no npm token and nothing is
 published from a local machine.
 
-- Canary (`@canary`): a push to `main` publishes one when the `CANARY_ENABLED`
-  repository variable is `true`; otherwise run the workflow manually on `main`.
+- Canary (`@canary`): every push to `main` that touches the package or its
+  shipped docs publishes one; you can also run the workflow manually on `main`.
 - Stable (`@latest`): merge a reviewed PR that sets `package.json` `version` and
   adds a matching `## [X.Y.Z]` entry to `CHANGELOG.md`, then push the tag
   `vX.Y.Z` on that `main` commit. The workflow refuses a tag that does not match
