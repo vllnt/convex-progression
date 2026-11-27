@@ -9,7 +9,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 
 - The npm package documents itself for coding agents: `README.md` and `llms.txt`
-  say the docs ship at `node_modules/@vllnt/convex-progression/docs/` and match
+  say where the shipped docs are (`docs/API.md`, plus `README.md`,
+  `CHANGELOG.md`, `llms.txt` and `src/` at the package root) and that they match
   the installed version. `llms.txt` gains an Ecosystem link to
   `https://oss.vllnt.com/llms.txt`; the README gains a Related packages section.
 - `docs/API.md` lists the package entry points and states what `streakDelta`
