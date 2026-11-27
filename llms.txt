@@ -24,14 +24,15 @@ There is no React entry or built-in leaderboard/calendar policy.
 
 ## For coding agents
 
-These docs ship in the npm package at
-`node_modules/@vllnt/convex-progression/docs/`, next to `README.md`,
-`CHANGELOG.md` and the TypeScript source in `src/`. They match the installed
-version. Read them before writing code against this package.
+These docs ship in the npm package: the full API reference at
+`node_modules/@vllnt/convex-progression/docs/API.md`, and `README.md`,
+`CHANGELOG.md`, this `llms.txt` and the TypeScript source in `src/` at the
+package root. They match the installed version. Read them before writing code
+against this package.
 
 ## Docs
 
-- [README](./README.md): Project overview, installation, usage examples, architecture
+- [README](./README.md): Project overview, installation, usage examples, security, testing
 - [API Reference](./docs/API.md): Public class methods, return shapes, input validation
 - [Changelog](./CHANGELOG.md): Version history and release notes
 - [Contributing](https://github.com/vllnt/convex-progression/blob/main/CONTRIBUTING.md): Development setup, validation commands, release workflow (not in the npm package)

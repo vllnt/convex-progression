@@ -47,10 +47,11 @@ development toolchain needs Node 20.19+ or 22.12+.
 
 ### For coding agents
 
-The docs ship in the npm package at
-`node_modules/@vllnt/convex-progression/docs/` (with `README.md`,
-`CHANGELOG.md`, `llms.txt` and the TypeScript source in `src/`). They match the
-installed version. Read them before writing code against this package.
+The docs ship in the npm package: the full API reference at
+`node_modules/@vllnt/convex-progression/docs/API.md`, and `README.md`,
+`CHANGELOG.md`, `llms.txt` and the TypeScript source in `src/` at the package
+root. They match the installed version. Read them before writing code against
+this package.
 
 ## Usage
 
@@ -213,7 +214,7 @@ pnpm test:coverage
 Tests use the `convex-test` in-memory simulation (`@edge-runtime/vm`), not a
 real Convex backend. They do not prove production OCC retries or scheduler
 behavior. Maintainer package checks are described in
-[CONTRIBUTING.md](CONTRIBUTING.md#package-checks).
+[CONTRIBUTING.md](https://github.com/vllnt/convex-progression/blob/main/CONTRIBUTING.md#package-checks).
 
 ### Testing your app
 
@@ -250,7 +251,8 @@ register(t);
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md).
+See
+[CONTRIBUTING.md](https://github.com/vllnt/convex-progression/blob/main/CONTRIBUTING.md).
 
 ## Author
 
