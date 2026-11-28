@@ -48,6 +48,10 @@ try {
   run("pnpm", ["pack", "--pack-destination", directory], process.cwd());
   const tarball = readdirSync(directory).find((name) => name.endsWith(".tgz"));
   assert.ok(tarball);
+  /** @type {{ packageManager: string }} */
+  const manifest = JSON.parse(
+    readFileSync(join(process.cwd(), "package.json"), "utf8"),
+  );
   writeFileSync(
     join(directory, "package.json"),
     JSON.stringify({
@@ -59,6 +63,8 @@ try {
         vite: "8.3.5",
         vitest: "5.1.1",
       },
+      // The repo's pnpm, so Corepack cannot pick one younger than 7 days.
+      packageManager: manifest.packageManager,
       private: true,
       type: "module",
     }),
@@ -70,6 +76,13 @@ try {
     join(process.cwd(), "pnpm-workspace.yaml"),
     join(directory, "pnpm-workspace.yaml"),
   );
+  const pnpmVersion = execFileSync("pnpm", ["--version"], {
+    cwd: directory,
+    encoding: "utf8",
+  }).trim();
+  // A packageManager value may carry a "+sha..." integrity suffix.
+  assert.equal(`pnpm@${pnpmVersion}`, manifest.packageManager.split("+")[0]);
+  console.info(`package test installs with pnpm ${pnpmVersion}`);
   run("pnpm", ["install", "--ignore-scripts"]);
   const installed = join(directory, "node_modules/@vllnt/convex-progression");
   const missing = required.filter((path) => !existsSync(join(installed, path)));
