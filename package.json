@@ -1,6 +1,6 @@
 {
   "name": "@vllnt/convex-progression",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "XP, levels, and streak windows as a Convex component",
   "license": "MIT",
   "type": "module",
