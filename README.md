@@ -1,5 +1,7 @@
 # @vllnt/convex-progression
 
+![Progression — @vllnt/convex-progression](https://raw.githubusercontent.com/vllnt/convex-progression/main/.github/assets/thumbnail.png)
+
 TypeScript Convex component for gamification: XP totals, levels from your own
 thresholds, and activity streaks over days, weeks or any period you define.
 
