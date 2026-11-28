@@ -1,1 +1,5 @@
 **/_generated/**
+# Written by pnpm.
+pnpm-lock.yaml
+# Guard workflow shared across repositories; edited only at its source.
+.github/workflows/privacy-guard.yml

@@ -8,17 +8,17 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [0.1.1] - 2026-11-28
 
-Documentation, packaging and release checks only. The component's runtime code,
-the compiled `dist` and the `convex@^1.45.0` peer range are unchanged from
-0.1.0.
+Documentation, packaging and release checks only. The component's runtime code
+and the `convex@^1.45.0` peer range are unchanged from 0.1.0. The compiled
+`dist` differs from 0.1.0 only by added TSDoc comments and the matching source
+maps.
 
 ### Added
 
 - The npm package documents itself for coding agents: `README.md` and `llms.txt`
   say where the shipped docs are (`docs/API.md`, plus `README.md`,
   `CHANGELOG.md`, `llms.txt` and `src/` at the package root) and that they match
-  the installed version. `llms.txt` gains an Ecosystem link to
-  `https://oss.vllnt.com/llms.txt`; the README gains a Related packages section.
+  the installed version.
 - `docs/API.md` lists the package entry points and states what `streakDelta`
   reports.
 - `scripts/check-pack.mjs` (run in CI) fails when a required file is missing
@@ -26,6 +26,39 @@ the compiled `dist` and the `convex@^1.45.0` peer range are unchanged from
   not resolve inside it.
 - `register` from `@vllnt/convex-progression/test` has a TSDoc summary. It
   accepts a `convexTest` instance built from any host schema.
+
+### Documentation
+
+- The README follows the section layout shared by every @vllnt package: For
+  coding agents, When to use, Install, Quick start, API, Common tasks, Errors
+  and fixes, Limits and gotchas, Compatibility, then Testing, Security, Related
+  packages, Contributing, Links and License. It has a table of every export and
+  of every error code with its message, cause and fix, and common tasks for
+  daily streaks, awarding XP once per event, changing the level ladder, erasing
+  a user and multiple mounts.
+- `docs/API.md` has one heading per export and `Progression` method, so the
+  README links straight to each entry, plus an errors table and the lifecycle
+  and retry rules.
+- `llms.txt` adds "When to use", links to the errors table, and ends with an
+  Ecosystem block: the package page, its release feed, the @vllnt package index,
+  package and docs search, vllnt and the author.
+- Every public export, `Progression` method and the component config have a
+  TSDoc summary; `Progression` links its package page with `@see`.
+- `package.json` `description` and `keywords` describe what the package does.
+  The same description sentence opens the README and is the `llms.txt` summary.
+- The README Related packages section says the package works with no other
+  package in code; packages for other needs are named under When to use.
+- A Links section lists the package page and release feed, the @vllnt package
+  index and search, the source, issues and npm, Discord and X, the company and
+  author, and sponsorship. The README ends with links to vllnt open source, the
+  package page, vllnt.com and the author.
+- `scripts/check-documentation.mjs` (run by `pnpm lint`, and by
+  `scripts/check-pack.mjs` on the packed package) enforces this layout: section
+  order, install and first example near the top, tagged code blocks, relative
+  links and anchors that resolve, external links that are well-formed https
+  URLs, every export and error code documented, the Links, footer and Ecosystem
+  blocks, and no retired domain. `check-pack.mjs` type-checks the README and
+  `docs/API.md` examples against the built package with convex 1.45.0.
 
 ### Changed
 

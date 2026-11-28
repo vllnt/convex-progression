@@ -7,6 +7,7 @@ assert.ok(index.startsWith("# @vllnt/convex-progression\n"));
 assert.ok(index.includes("[README](./README.md)"));
 assert.ok(index.includes("[API Reference](./docs/API.md)"));
 assert.ok(index.includes("[Changelog](./CHANGELOG.md)"));
+assert.ok(index.includes("[Errors and fixes](./README.md#errors-and-fixes)"));
 assert.ok(index.includes("node_modules/@vllnt/convex-progression/docs/API.md"));
 assert.ok(index.includes("(https://oss.vllnt.com/llms.txt)"));
 // llms.txt ships in the npm package: links to shipped files are relative so they

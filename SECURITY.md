@@ -15,5 +15,6 @@ Please report security vulnerabilities through
 
 ## Scope
 
-This policy covers the `@vllnt/convex-progression` npm package. Issues in Convex itself should be
-reported to [Convex](https://docs.convex.dev/production/security).
+This policy covers the `@vllnt/convex-progression` npm package. Issues in Convex
+itself should be reported to
+[Convex](https://docs.convex.dev/production/security).
