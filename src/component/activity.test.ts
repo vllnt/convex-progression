@@ -194,3 +194,14 @@ test("a row created by accrue has no stored period, so the first activity writes
     streakDelta: 1,
   });
 });
+
+test("a same-period repeat still validates its input before returning the stored row", async () => {
+  const t = newTest();
+  await record(t, { periodKey: "d1", thresholds: [] });
+  await expect(
+    record(t, { periodKey: "d1", thresholds: [2, 1] }),
+  ).rejects.toThrow("INVALID_THRESHOLDS");
+  await expect(
+    record(t, { expectedPrevious: "", periodKey: "d1", thresholds: [] }),
+  ).rejects.toThrow("INVALID_REF");
+});

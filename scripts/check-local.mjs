@@ -142,7 +142,7 @@ try {
   const otherMount = await client.query(api.example.getSecondary, base);
   assert.equal(otherMount?.xp, 7);
   console.info(
-    "PASS: real local concurrent awards, same-period writes, scheduled multi-pass erase, scope isolation",
+    "PASS: real local concurrent awards, same-period activity, scheduled multi-pass erase, scope isolation",
   );
 } finally {
   // This process owns this newly spawned process group, not an arbitrary PID.
