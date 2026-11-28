@@ -73,8 +73,9 @@ maps.
 
 - The package-contents check run before every publish also rejects `.spec.mts`
   and `.spec.cts` test files.
-- CI runs the package-contents check's own tests, and the 7-day dependency
-  release-age gate moved to `pnpm-workspace.yaml`, where pnpm 10 reads it.
+- CI runs the package-contents check's own tests. The 7-day dependency
+  release-age gate, which pnpm 10 ignored in the `package.json` `pnpm` field, is
+  now in `pnpm-workspace.yaml`. `files` excludes test files of every extension.
 
 ## [0.1.0] - 2026-11-23
 

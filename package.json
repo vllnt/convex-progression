@@ -11,7 +11,7 @@
     "docs/API.md",
     "CHANGELOG.md",
     "llms.txt",
-    "!src/**/*.test.ts",
+    "!src/**/*.test.*",
     "!src/**/*.spec.*"
   ],
   "exports": {
