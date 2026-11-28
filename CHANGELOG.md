@@ -6,12 +6,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-## [0.1.1] - 2026-11-28
+## [0.2.0] - 2026-11-28
 
-Documentation, packaging and release checks only. The component's runtime code
-and the `convex@^1.45.0` peer range are unchanged from 0.1.0. The compiled
-`dist` differs from 0.1.0 only by added TSDoc comments and the matching source
-maps.
+One behaviour change in `recordActivity` (below); everything else is
+documentation, packaging and release checks. The `convex@^1.45.0` peer range and
+the stored row shape are unchanged from 0.1.0.
 
 ### Added
 
@@ -62,6 +61,15 @@ maps.
 
 ### Changed
 
+- **Breaking:** `recordActivity` with the stored `periodKey` and an unchanged
+  recomputed `level` no longer writes the row. It returns the stored state
+  (`streakDelta: 0`, the stored `updatedAt`), which saves one write and a re-run
+  of every `get` subscription on that row per repeat call. A changed `level` (a
+  new threshold ladder) in the same period, and every new period, still write
+  and refresh `updatedAt`. Hosts that read `updatedAt` as "last activity time"
+  within a period must store their own timestamp. Rows written by 0.1.x have the
+  same shape and need no migration: they are read as stored, and the first call
+  that changes the period or the level writes them as before.
 - `llms.txt` links to shipped files (`README.md`, `docs/API.md`, `CHANGELOG.md`,
   `LICENSE`) are relative, so they point at the installed version instead of
   GitHub `main`.
