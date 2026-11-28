@@ -6,6 +6,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-11-28
+
+Documentation, packaging and release checks only. The component's runtime code,
+the compiled `dist` and the `convex@^1.45.0` peer range are unchanged from
+0.1.0.
+
 ### Added
 
 - The npm package documents itself for coding agents: `README.md` and `llms.txt`
@@ -18,6 +24,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `scripts/check-pack.mjs` (run in CI) fails when a required file is missing
   from the packed tarball, a contributor file ships, or an `llms.txt` link does
   not resolve inside it.
+- `register` from `@vllnt/convex-progression/test` has a TSDoc summary. A test
+  proves it accepts a `convexTest` instance built from a host schema with its
+  own tables and mounts a callable component.
 
 ### Changed
 
@@ -27,6 +36,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `homepage` is `https://oss.vllnt.com/packages/convex-progression`.
 - Every push to `main` that touches the package or its shipped docs publishes a
   canary; a repository variable no longer gates it.
+
+### Fixed
+
+- The release package-contents check (`scripts/check-package-contents.sh`) also
+  rejects `.spec.mts` and `.spec.cts` test files.
 
 ## [0.1.0] - 2026-11-23
 
