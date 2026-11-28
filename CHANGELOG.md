@@ -54,8 +54,9 @@ maps.
   package page, vllnt.com and the author.
 - `scripts/check-documentation.mjs` (run by `pnpm lint`, and by
   `scripts/check-pack.mjs` on the packed package) enforces this layout: section
-  order, install and first example near the top, tagged code blocks, resolving
-  links, every export and error code documented, the Links, footer and Ecosystem
+  order, install and first example near the top, tagged code blocks, relative
+  links and anchors that resolve, external links that are well-formed https
+  URLs, every export and error code documented, the Links, footer and Ecosystem
   blocks, and no retired domain. `check-pack.mjs` type-checks the README and
   `docs/API.md` examples against the built package with convex 1.45.0.
 
