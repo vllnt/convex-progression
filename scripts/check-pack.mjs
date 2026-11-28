@@ -11,6 +11,12 @@ import {
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
+import {
+  checkDocumentation,
+  convexHost,
+  writeHost,
+} from "./check-documentation.mjs";
+
 // Files agents and consumers read from node_modules; they must ship.
 const required = [
   "CHANGELOG.md",
@@ -50,6 +56,7 @@ try {
         "convex-test": "0.0.65",
         typescript: "npm:@typescript/typescript6@6.0.2",
         vite: "8.3.5",
+        vitest: "5.1.1",
       },
       private: true,
       type: "module",
@@ -77,6 +84,25 @@ try {
     [],
     `llms.txt links outside the tarball: ${broken.join(", ")}`,
   );
+  // Docs contract on what consumers receive, then the README and docs/API.md
+  // examples type-check against the built package in a stub Convex host.
+  const examples = checkDocumentation(installed);
+  const host = writeHost(directory, convexHost(installed, examples), examples);
+  run(process.execPath, [
+    join(directory, "node_modules/typescript/bin/tsc6"),
+    "--noEmit",
+    "--strict",
+    "--skipLibCheck",
+    "--target",
+    "ES2022",
+    "--module",
+    "ESNext",
+    "--moduleResolution",
+    "Bundler",
+    "--types",
+    "vite/client",
+    ...host,
+  ]);
   writeFileSync(
     join(directory, "check.ts"),
     `import { Progression } from "@vllnt/convex-progression";
@@ -115,7 +141,7 @@ void component;
     'import {Progression} from "@vllnt/convex-progression"; import c from "@vllnt/convex-progression/convex.config.js"; if(typeof Progression!=="function" || !c) throw Error("bad exports");',
   ]);
   console.info(
-    "PASS: packed files, llms.txt links, NodeNext types and runtime root/config exports",
+    `PASS: packed files, docs contract, ${String(examples.length)} doc examples, llms.txt links, NodeNext types and runtime root/config exports`,
   );
 } finally {
   rmSync(directory, { force: true, recursive: true });

@@ -13,6 +13,10 @@ import type {
   ProgressState,
 } from "./types.js";
 
+/**
+ * Shape of the mounted component reference, `components.progression` in the
+ * host's `convex/_generated/api`. Pass it to `new Progression(...)`.
+ */
 export type ProgressionComponent = {
   mutations: {
     accrue: FunctionReference<
@@ -82,9 +86,21 @@ type RunMutationCtx = {
   ): Promise<FunctionReturnType<TMutation>>;
 };
 
+/**
+ * Host-side client for one mounted progression component. Call its methods
+ * from host Convex mutations and queries after authorizing the caller; the
+ * component never reads auth. Every method takes an optional `scope`, which
+ * defaults to `defaultScope` (`"global"`).
+ *
+ * @see https://oss.vllnt.com/packages/convex-progression
+ */
 export class Progression {
   private readonly defaultScope: string;
 
+  /**
+   * @param component - The mounted component, e.g. `components.progression`.
+   * @param options - `defaultScope`, the scope for calls that pass none.
+   */
   constructor(
     private readonly component: ProgressionComponent,
     options: ProgressionOptions = {},
@@ -96,6 +112,12 @@ export class Progression {
     return scope ?? this.defaultScope;
   }
 
+  /**
+   * Adds `delta` XP to the `(scope, subjectRef, key)` row, creating it when
+   * missing, and sets `level` to the number of `thresholds` the new total has
+   * reached. Not event-idempotent. Throws `ConvexError` `INVALID_REF`,
+   * `INVALID_DELTA`, `INVALID_THRESHOLDS` or `XP_OVERFLOW`.
+   */
   accrue(
     ctx: RunMutationCtx,
     subjectRef: string,
@@ -113,6 +135,13 @@ export class Progression {
     });
   }
 
+  /**
+   * Records activity in the host period `periodKey`. The stored period again:
+   * streak unchanged. The stored period equals `options.expectedPrevious`:
+   * streak + 1. Otherwise the streak restarts at 1. Also recomputes `level`
+   * from `thresholds`. Throws `ConvexError` `INVALID_REF`, `INVALID_THRESHOLDS`
+   * or `STREAK_OVERFLOW`.
+   */
   recordActivity(
     ctx: RunMutationCtx,
     subjectRef: string,
@@ -131,6 +160,12 @@ export class Progression {
     });
   }
 
+  /**
+   * Returns the progress row, or `null` when none exists (also for an empty or
+   * over-long ref). With `thresholds`, the returned `level` counts those
+   * thresholds against the stored XP; the stored row does not change. Throws
+   * `ConvexError` `INVALID_THRESHOLDS`.
+   */
   get(
     ctx: RunQueryCtx,
     subjectRef: string,
@@ -146,6 +181,10 @@ export class Progression {
     });
   }
 
+  /**
+   * Deletes the `(scope, subjectRef, key)` row and returns `null`, whether or
+   * not the row existed. Throws `ConvexError` `INVALID_REF`.
+   */
   reset(
     ctx: RunMutationCtx,
     subjectRef: string,
@@ -159,6 +198,12 @@ export class Progression {
     });
   }
 
+  /**
+   * Deletes up to `batch` of the subject's rows in the scope (default 200,
+   * clamped to 500) and returns the number of rows this call deleted. A full
+   * batch schedules another pass. Throws `ConvexError` `INVALID_REF` or
+   * `INVALID_BATCH`.
+   */
   eraseSubject(
     ctx: RunMutationCtx,
     subjectRef: string,
