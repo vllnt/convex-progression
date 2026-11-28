@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import {
+  copyFileSync,
   existsSync,
   mkdtempSync,
   readdirSync,
@@ -61,6 +62,13 @@ try {
       private: true,
       type: "module",
     }),
+  );
+  // No lockfile here, so the repo's release-age gate (pnpm-workspace.yaml)
+  // must reach this install too, or floating transitive deps can pull a fresh
+  // release. Without a packages list the copy is a single-package workspace.
+  copyFileSync(
+    join(process.cwd(), "pnpm-workspace.yaml"),
+    join(directory, "pnpm-workspace.yaml"),
   );
   run("pnpm", ["install", "--ignore-scripts"]);
   const installed = join(directory, "node_modules/@vllnt/convex-progression");

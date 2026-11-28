@@ -76,6 +76,8 @@ maps.
 - CI runs the package-contents check's own tests. The 7-day dependency
   release-age gate, which pnpm 10 ignored in the `package.json` `pnpm` field, is
   now in `pnpm-workspace.yaml`. `files` excludes test files of every extension.
+- The package test's lockfile-free install uses the same gate, and Renovate
+  exempts `@vllnt/*` from its 7-day delay as pnpm does.
 
 ## [0.1.0] - 2026-11-23
 
