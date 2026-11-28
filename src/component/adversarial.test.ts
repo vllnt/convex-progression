@@ -15,6 +15,7 @@ describe("adversarial boundaries", () => {
       Number.NaN,
       Infinity,
       -1,
+      0,
       Number.MAX_SAFE_INTEGER + 1,
     ]) {
       await expect(
