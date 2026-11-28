@@ -87,15 +87,15 @@ commit_tree
 run "packed test file is denied" 1
 grep -q 'DENY  src/index.test.ts' <<< "$LAST_OUTPUT" || { echo "FAIL test path not denied" >&2; failures=$((failures + 1)); }
 
-# ESM and CJS TypeScript spec files are test files too
-for ext in mts cts; do
+# ESM and CJS TypeScript test and spec files are test files too
+for suffix in test.mts test.cts spec.mts spec.cts; do
   rm -rf "$REPO/src"
   mkdir -p "$REPO/src"
   printf 'export {}\n' > "$REPO/src/index.ts"
-  printf 'test()\n' > "$REPO/src/index.spec.$ext"
+  printf 'test()\n' > "$REPO/src/index.$suffix"
   commit_tree
-  run "packed .spec.$ext file is denied" 1
-  grep -q "DENY  src/index.spec.$ext" <<< "$LAST_OUTPUT" || { echo "FAIL .spec.$ext path not denied" >&2; failures=$((failures + 1)); }
+  run "packed .$suffix file is denied" 1
+  grep -q "DENY  src/index.$suffix" <<< "$LAST_OUTPUT" || { echo "FAIL .$suffix path not denied" >&2; failures=$((failures + 1)); }
 done
 
 # Denylist hit inside dist

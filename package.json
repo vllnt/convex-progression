@@ -11,7 +11,7 @@
     "docs/API.md",
     "CHANGELOG.md",
     "llms.txt",
-    "!src/**/*.test.ts",
+    "!src/**/*.test.*",
     "!src/**/*.spec.*"
   ],
   "exports": {
@@ -111,10 +111,6 @@
   "pnpm": {
     "ignoredBuiltDependencies": [
       "esbuild"
-    ],
-    "minimumReleaseAge": 10080,
-    "minimumReleaseAgeExclude": [
-      "@vllnt/*"
     ],
     "overrides": {
       "minimatch@>=7.0.0 <11.0.1": "11.0.5",
