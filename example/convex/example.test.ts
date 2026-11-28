@@ -292,6 +292,29 @@ describe("progression — validation and scope", () => {
     expect(
       await t.query(api.example.get, { key: "solo", subjectRef: "u1" }),
     ).toBeNull();
+    expect(
+      await t.query(api.example.get, {
+        key: "solo",
+        scope: "tenant",
+        subjectRef: "u1",
+      }),
+    ).toMatchObject({ level: 1, xp: 10 });
+  });
+
+  test("a second named mount keeps its own rows", async () => {
+    const t = setup();
+    register(t, "secondary");
+    const ref = { key: "solo", subjectRef: "u1" };
+    expect(await t.mutation(api.example.accrueSecondary, ref)).toMatchObject({
+      xp: 7,
+    });
+    expect(await t.query(api.example.get, ref)).toBeNull();
+    await t.mutation(api.example.accrue, { ...ref, delta: 1, thresholds: [] });
+    await t.mutation(api.example.eraseSubject, { subjectRef: "u1" });
+    expect(await t.query(api.example.get, ref)).toBeNull();
+    expect(await t.query(api.example.getSecondary, ref)).toMatchObject({
+      xp: 7,
+    });
   });
 });
 
