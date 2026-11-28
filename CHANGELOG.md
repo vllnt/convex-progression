@@ -24,9 +24,8 @@ the compiled `dist` and the `convex@^1.45.0` peer range are unchanged from
 - `scripts/check-pack.mjs` (run in CI) fails when a required file is missing
   from the packed tarball, a contributor file ships, or an `llms.txt` link does
   not resolve inside it.
-- `register` from `@vllnt/convex-progression/test` has a TSDoc summary. A test
-  proves it accepts a `convexTest` instance built from a host schema with its
-  own tables and mounts a callable component.
+- `register` from `@vllnt/convex-progression/test` has a TSDoc summary. It
+  accepts a `convexTest` instance built from any host schema.
 
 ### Changed
 
@@ -37,10 +36,10 @@ the compiled `dist` and the `convex@^1.45.0` peer range are unchanged from
 - Every push to `main` that touches the package or its shipped docs publishes a
   canary; a repository variable no longer gates it.
 
-### Fixed
+### Release process
 
-- The release package-contents check (`scripts/check-package-contents.sh`) also
-  rejects `.spec.mts` and `.spec.cts` test files.
+- The package-contents check run before every publish also rejects `.spec.mts`
+  and `.spec.cts` test files.
 
 ## [0.1.0] - 2026-11-23
 
