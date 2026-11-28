@@ -66,8 +66,8 @@ maps.
   `LICENSE`) are relative, so they point at the installed version instead of
   GitHub `main`.
 - `homepage` is `https://oss.vllnt.com/packages/convex-progression`.
-- Every push to `main` that touches the package or its shipped docs publishes a
-  canary; a repository variable no longer gates it.
+- Every push to `main` publishes a canary; a repository variable no longer gates
+  it.
 
 ### Release process
 
@@ -76,8 +76,11 @@ maps.
 - CI runs the package-contents check's own tests. The 7-day dependency
   release-age gate, which pnpm 10 ignored in the `package.json` `pnpm` field, is
   now in `pnpm-workspace.yaml`. `files` excludes test files of every extension.
-- The package test's lockfile-free install uses the same gate, and Renovate
-  exempts `@vllnt/*` from its 7-day delay as pnpm does.
+- The package test's lockfile-free install uses the same gate.
+- Internal: there is no version-update bot; dependency updates are a manual pass
+  under the 7-day gate. CI and publish set up pnpm through Corepack, the package
+  test installs with the repo's pinned pnpm, every action in the workflows is
+  pinned to a commit, and a test pins `INVALID_DELTA` for a zero award.
 
 ## [0.1.0] - 2026-11-23
 
