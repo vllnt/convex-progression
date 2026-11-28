@@ -51,10 +51,10 @@ range and the stored row shape are unchanged from 0.1.0.
 - The README uses the section layout shared by @vllnt packages: For coding
   agents, When to use, Install, Quick start, API, Common tasks, Errors and
   fixes, Limits and gotchas, Compatibility, Testing, Security, Related packages,
-  Contributing, Links and License. The 0.1.0 Features, Usage, Configuration and
-  limits, API Reference, React, Multiple mounts and Author sections are folded
-  into them. The npm and CI badges move to the end; the convex-component and
-  license badges are gone.
+  Contributing, Links and License. The 0.1.0 Installation section is now
+  Install; its Features, Usage, Configuration and limits, API Reference, React,
+  Multiple mounts and Author sections are folded into the new ones. The npm and
+  CI badges move to the end; the convex-component and license badges are gone.
 - `package.json` `description` and `keywords` describe what the package does;
   the same description opens the README and is the `llms.txt` summary.
   `homepage` is `https://oss.vllnt.com/packages/convex-progression`.
