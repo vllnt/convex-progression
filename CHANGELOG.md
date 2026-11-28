@@ -23,8 +23,8 @@ range and the stored row shape are unchanged from 0.1.0.
   release feed, package index and search, source, issues, npm, Discord, X, the
   company, the author and sponsorship.
 - `docs/API.md` lists the package entry points, has one heading per export and
-  `Progression` method, states what `streakDelta` reports, and has an errors
-  table and the lifecycle and retry rules.
+  `Progression` method and an errors table, and states what `streakDelta`
+  reports.
 - `llms.txt` adds "When to use", a link to the errors table and an Ecosystem
   block: the package page, its release feed, the @vllnt package index, package
   and docs search, vllnt and the author.
@@ -48,13 +48,18 @@ range and the stored row shape are unchanged from 0.1.0.
 - `llms.txt` links to shipped files (`README.md`, `docs/API.md`, `CHANGELOG.md`,
   `LICENSE`) are relative, so they point at the installed version instead of
   GitHub `main`.
+- The README uses the section layout shared by @vllnt packages: For coding
+  agents, When to use, Install, Quick start, API, Common tasks, Errors and
+  fixes, Limits and gotchas, Compatibility, Testing, Security, Related packages,
+  Contributing, Links and License. The 0.1.0 Features, Usage, Configuration and
+  limits, API Reference, React, Multiple mounts and Author sections are folded
+  into them. The npm and CI badges move to the end; the convex-component and
+  license badges are gone.
 - `package.json` `description` and `keywords` describe what the package does;
   the same description opens the README and is the `llms.txt` summary.
   `homepage` is `https://oss.vllnt.com/packages/convex-progression`.
-- Internal: stricter CI and publish checks (docs contract, packed package and
-  doc examples type-checked against convex 1.45.0, package contents, 7-day
-  dependency age), a canary on every push to `main`, and tests for every error
-  code, ref limit and erase batch size.
+- Internal: stricter CI and publish checks, a canary on every push to `main`,
+  and more tests.
 
 ## [0.1.0] - 2026-11-23
 

@@ -176,7 +176,7 @@ describe("eraseSubject batches", () => {
     }
   });
 
-  test("defaults to 200, clamps to 500 and reschedules with the same size", async () => {
+  test("defaults to 200, clamps to 500 and scheduled passes drain the rest", async () => {
     vi.useFakeTimers();
     try {
       const t = convexTest(schema, modules);
