@@ -529,7 +529,7 @@ function checkIdentity(texts, parts, metadata) {
   const title = readme.indexOf("\n");
   const intro = readme
     .slice(title, readme.indexOf("\n## ", title))
-    .replace(
+    .replaceAll(
       /!\[[^\]]*\]\(https:\/\/raw\.githubusercontent\.com\/vllnt\/[^)]+\/\.github\/assets\/thumbnail\.png\)/g,
       "",
     )
