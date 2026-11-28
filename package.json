@@ -112,10 +112,6 @@
     "ignoredBuiltDependencies": [
       "esbuild"
     ],
-    "minimumReleaseAge": 10080,
-    "minimumReleaseAgeExclude": [
-      "@vllnt/*"
-    ],
     "overrides": {
       "minimatch@>=7.0.0 <11.0.1": "11.0.5",
       "deepmerge-ts@<8.0.0": "^8.0.2",

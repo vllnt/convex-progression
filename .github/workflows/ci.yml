@@ -77,6 +77,7 @@ jobs:
           node-version-file: .node-version
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: bash scripts/test-check-package-contents.sh
       - run: pnpm build
       - run: node scripts/check-pack.mjs
       - run: pnpm generate:llms && git diff --exit-code -- llms.txt
