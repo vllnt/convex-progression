@@ -1,6 +1,6 @@
 {
   "name": "@vllnt/convex-progression",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "TypeScript Convex component for gamification: XP totals, levels from your own thresholds, and activity streaks over days, weeks or any period you define.",
   "license": "MIT",
   "type": "module",

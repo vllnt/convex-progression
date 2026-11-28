@@ -139,8 +139,10 @@ export class Progression {
    * Records activity in the host period `periodKey`. The stored period again:
    * streak unchanged. The stored period equals `options.expectedPrevious`:
    * streak + 1. Otherwise the streak restarts at 1. Also recomputes `level`
-   * from `thresholds`. Throws `ConvexError` `INVALID_REF`, `INVALID_THRESHOLDS`
-   * or `STREAK_OVERFLOW`.
+   * from `thresholds`. The stored period again with an unchanged `level` does
+   * not write: it returns the stored row, so `updatedAt` stays the time of the
+   * last write. Throws `ConvexError` `INVALID_REF`, `INVALID_THRESHOLDS` or
+   * `STREAK_OVERFLOW`.
    */
   recordActivity(
     ctx: RunMutationCtx,
