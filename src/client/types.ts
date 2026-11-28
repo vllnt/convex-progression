@@ -24,7 +24,8 @@ export type AccrueResult = {
 
 /**
  * Result of `recordActivity`: the new state plus `streakDelta`, `0` for the
- * stored period and `1` for any new period.
+ * stored period and `1` for any new period. For the stored period with an
+ * unchanged `level` it is the stored row, with the stored `updatedAt`.
  */
 export type ActivityResult = {
   streakDelta: number;

@@ -63,12 +63,14 @@ recordActivity(ctx, subjectRef: string, key: string, periodKey: string, threshol
 - Otherwise (including a row created by `accrue`, which has no `lastPeriodKey`):
   streak restarts at 1.
 
-Every call writes: it stores `periodKey`, recomputes and stores `level` from
-`thresholds`, refreshes `updatedAt` and keeps `maxStreak` at the highest streak
-reached. It adds no XP. `streakDelta` is `0` for the same period and `1` for any
-new period, including one that restarts the streak at 1; it is not the net
-change in `streak`. Errors: `INVALID_REF`, `INVALID_THRESHOLDS`,
-`STREAK_OVERFLOW`.
+A call with the stored `periodKey` whose recomputed `level` equals the stored
+level does not write: it returns the stored row with `streakDelta: 0`, and
+`updatedAt` keeps the time of the last write. Every other call writes: it stores
+`periodKey`, recomputes and stores `level` from `thresholds`, refreshes
+`updatedAt` and keeps `maxStreak` at the highest streak reached. It adds no XP.
+`streakDelta` is `0` for the same period and `1` for any new period, including
+one that restarts the streak at 1; it is not the net change in `streak`. Errors:
+`INVALID_REF`, `INVALID_THRESHOLDS`, `STREAK_OVERFLOW`.
 
 ### `get`
 
@@ -130,8 +132,10 @@ type ProgressState = {
 };
 ```
 
-`updatedAt` is the time of the last write in milliseconds since the epoch.
-`lastPeriodKey` is absent until the first `recordActivity`.
+`updatedAt` is the time of the last write in milliseconds since the epoch. A
+`recordActivity` call that repeats the stored period at the same level does not
+write, so it does not change `updatedAt`. `lastPeriodKey` is absent until the
+first `recordActivity`.
 
 ### `AccrueResult`
 

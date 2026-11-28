@@ -94,6 +94,36 @@ function nextStreak(
   return 1;
 }
 
+function requireActivityReferences(
+  ref: Ref & { expectedPrevious?: string; periodKey: string },
+): void {
+  requireReferences(ref);
+  requireRef(ref.periodKey, "periodKey");
+  if (ref.expectedPrevious !== undefined) {
+    requireRef(ref.expectedPrevious, "expectedPrevious");
+  }
+}
+
+/** The stored state when activity repeats the stored period at the same level. */
+function unchangedActivity(
+  existing: null | Progress,
+  periodKey: string,
+  level: number,
+): null | (ProgressRow & { streakDelta: number }) {
+  if (existing?.lastPeriodKey !== periodKey || existing.level !== level) {
+    return null;
+  }
+  return {
+    lastPeriodKey: existing.lastPeriodKey,
+    level,
+    maxStreak: existing.maxStreak,
+    streak: existing.streak,
+    streakDelta: 0,
+    updatedAt: existing.updatedAt,
+    xp: existing.xp,
+  };
+}
+
 export const accrue = mutation({
   args: {
     delta: v.number(),
@@ -134,14 +164,15 @@ export const recordActivity = mutation({
     thresholds: v.array(v.number()),
   },
   handler: async (ctx, arguments_) => {
-    requireReferences(arguments_);
-    requireRef(arguments_.periodKey, "periodKey");
-    if (arguments_.expectedPrevious !== undefined) {
-      requireRef(arguments_.expectedPrevious, "expectedPrevious");
-    }
+    requireActivityReferences(arguments_);
     const thresholds = parseThresholds(arguments_.thresholds);
     const existing = await findProgress(ctx, arguments_);
     const xp = existing?.xp ?? 0;
+    const level = levelForXp(xp, thresholds);
+    const unchanged = unchangedActivity(existing, arguments_.periodKey, level);
+    if (unchanged !== null) {
+      return unchanged;
+    }
     const streak = nextStreak(
       existing,
       arguments_.periodKey,
@@ -149,7 +180,7 @@ export const recordActivity = mutation({
     );
     const row = {
       lastPeriodKey: arguments_.periodKey,
-      level: levelForXp(xp, thresholds),
+      level,
       maxStreak: Math.max(existing?.maxStreak ?? 0, streak),
       streak,
       updatedAt: Date.now(),

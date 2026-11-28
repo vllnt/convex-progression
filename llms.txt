@@ -10,7 +10,8 @@ queries. It stores one sandboxed `progress` table, one row per
 `(scope, subjectRef, key)`: `xp`, `level`, `streak`, `maxStreak`,
 `lastPeriodKey`, `updatedAt`. Methods: `accrue` adds XP and stores `level`, the
 count of host `thresholds` the XP has reached; `recordActivity` records a host
-`periodKey` (same period: streak unchanged; stored period equals
+`periodKey` (same period: streak unchanged, and no write or `updatedAt` change
+unless `level` changes; stored period equals
 `expectedPrevious`: streak + 1; otherwise the streak restarts at 1); `get`
 returns the state or `null` and recomputes `level` when `thresholds` are passed;
 `reset` deletes one row; `eraseSubject` deletes a subject's rows in one scope in

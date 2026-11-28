@@ -313,8 +313,11 @@ Convex argument validation before the component runs.
 - `previousLevel` is the level stored by the previous write, which may come from
   another ladder; `leveledUp` is `level > previousLevel`.
 - `recordActivity` with the stored period again leaves the streak unchanged and
-  returns `streakDelta: 0`, but it still writes: `level` is recomputed and
-  `updatedAt` is refreshed.
+  returns `streakDelta: 0`. If the recomputed `level` equals the stored one, it
+  does not write: it returns the stored row, `updatedAt` included, so
+  `updatedAt` is not the time of the last activity. Store your own timestamp if
+  you need one. A new `level` from a changed ladder is written and refreshes
+  `updatedAt`.
 - Without a matching `expectedPrevious`, every new period restarts the streak
   at 1. `streakDelta` is `1` for every new period, including a restart; it is
   not the change in `streak`.
