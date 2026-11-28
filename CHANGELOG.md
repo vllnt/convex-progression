@@ -4,13 +4,11 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-
 ## [0.2.0] - 2026-11-28
 
 One behaviour change in `recordActivity` (below); everything else is
-documentation, packaging and release checks. The `convex@^1.45.0` peer range and
-the stored row shape are unchanged from 0.1.0.
+documentation and packaging. The `convex@^1.45.0` peer range, the Node.js `>=20`
+range and the stored row shape are unchanged from 0.1.0.
 
 ### Added
 
@@ -18,46 +16,23 @@ the stored row shape are unchanged from 0.1.0.
   say where the shipped docs are (`docs/API.md`, plus `README.md`,
   `CHANGELOG.md`, `llms.txt` and `src/` at the package root) and that they match
   the installed version.
-- `docs/API.md` lists the package entry points and states what `streakDelta`
-  reports.
-- `scripts/check-pack.mjs` (run in CI) fails when a required file is missing
-  from the packed tarball, a contributor file ships, or an `llms.txt` link does
-  not resolve inside it.
-- `register` from `@vllnt/convex-progression/test` has a TSDoc summary. It
-  accepts a `convexTest` instance built from any host schema.
-
-### Documentation
-
-- The README follows the section layout shared by every @vllnt package: For
-  coding agents, When to use, Install, Quick start, API, Common tasks, Errors
-  and fixes, Limits and gotchas, Compatibility, then Testing, Security, Related
-  packages, Contributing, Links and License. It has a table of every export and
-  of every error code with its message, cause and fix, and common tasks for
-  daily streaks, awarding XP once per event, changing the level ladder, erasing
-  a user and multiple mounts.
-- `docs/API.md` has one heading per export and `Progression` method, so the
-  README links straight to each entry, plus an errors table and the lifecycle
-  and retry rules.
-- `llms.txt` adds "When to use", links to the errors table, and ends with an
-  Ecosystem block: the package page, its release feed, the @vllnt package index,
-  package and docs search, vllnt and the author.
-- Every public export, `Progression` method and the component config have a
-  TSDoc summary; `Progression` links its package page with `@see`.
-- `package.json` `description` and `keywords` describe what the package does.
-  The same description sentence opens the README and is the `llms.txt` summary.
-- The README Related packages section says the package works with no other
-  package in code; packages for other needs are named under When to use.
-- A Links section lists the package page and release feed, the @vllnt package
-  index and search, the source, issues and npm, Discord and X, the company and
-  author, and sponsorship. The README ends with links to vllnt open source, the
-  package page, vllnt.com and the author.
-- `scripts/check-documentation.mjs` (run by `pnpm lint`, and by
-  `scripts/check-pack.mjs` on the packed package) enforces this layout: section
-  order, install and first example near the top, tagged code blocks, relative
-  links and anchors that resolve, external links that are well-formed https
-  URLs, every export and error code documented, the Links, footer and Ecosystem
-  blocks, and no retired domain. `check-pack.mjs` type-checks the README and
-  `docs/API.md` examples against the built package with convex 1.45.0.
+- The README has a table of every export, a table of every error code with its
+  message, cause and fix, Limits and gotchas, Compatibility, and common tasks
+  for daily streaks, awarding XP once per event, changing the level ladder,
+  erasing a user and multiple mounts. A Links section lists the package page,
+  release feed, package index and search, source, issues, npm, Discord, X, the
+  company, the author and sponsorship.
+- `docs/API.md` lists the package entry points, has one heading per export and
+  `Progression` method, states what `streakDelta` reports, and has an errors
+  table and the lifecycle and retry rules.
+- `llms.txt` adds "When to use", a link to the errors table and an Ecosystem
+  block: the package page, its release feed, the @vllnt package index, package
+  and docs search, vllnt and the author.
+- Every public export, `Progression` method, the component config and `register`
+  from `@vllnt/convex-progression/test` have a TSDoc summary; `Progression`
+  links its package page with `@see`.
+- The README Compatibility section says that convex 1.49 and newer need Node.js
+  22 or later.
 
 ### Changed
 
@@ -73,22 +48,13 @@ the stored row shape are unchanged from 0.1.0.
 - `llms.txt` links to shipped files (`README.md`, `docs/API.md`, `CHANGELOG.md`,
   `LICENSE`) are relative, so they point at the installed version instead of
   GitHub `main`.
-- `homepage` is `https://oss.vllnt.com/packages/convex-progression`.
-- Every push to `main` publishes a canary; a repository variable no longer gates
-  it.
-
-### Release process
-
-- The package-contents check run before every publish also rejects `.spec.mts`
-  and `.spec.cts` test files.
-- CI runs the package-contents check's own tests. The 7-day dependency
-  release-age gate, which pnpm 10 ignored in the `package.json` `pnpm` field, is
-  now in `pnpm-workspace.yaml`. `files` excludes test files of every extension.
-- The package test's lockfile-free install uses the same gate.
-- Internal: there is no version-update bot; dependency updates are a manual pass
-  under the 7-day gate. CI and publish set up pnpm through Corepack, the package
-  test installs with the repo's pinned pnpm, every action in the workflows is
-  pinned to a commit, and a test pins `INVALID_DELTA` for a zero award.
+- `package.json` `description` and `keywords` describe what the package does;
+  the same description opens the README and is the `llms.txt` summary.
+  `homepage` is `https://oss.vllnt.com/packages/convex-progression`.
+- Internal: stricter CI and publish checks (docs contract, packed package and
+  doc examples type-checked against convex 1.45.0, package contents, 7-day
+  dependency age), a canary on every push to `main`, and tests for every error
+  code, ref limit and erase batch size.
 
 ## [0.1.0] - 2026-11-23
 
